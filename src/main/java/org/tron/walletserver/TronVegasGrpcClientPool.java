@@ -94,7 +94,7 @@ public class TronVegasGrpcClientPool {
 
                     if (TronVegasGrpcClientPool.crunchifyAddressReachable(node.getAddress().getHost().toStringUtf8(), DEFAULT_GRPC_PORT, CONNECTING_TIMEOUT) <= MAX_QUERY_TIME) {
                         try {
-                            String host = ip + ":50051";
+                            String host = ip + ":" + DEFAULT_GRPC_PORT;
                             long time = System.currentTimeMillis();
                             GrpcClient client = new GrpcClient(host, "");
                             GrpcAPI.BlockExtention block = client.getBlock2(-1);

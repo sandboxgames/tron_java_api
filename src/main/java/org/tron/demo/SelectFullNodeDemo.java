@@ -12,9 +12,12 @@ public class SelectFullNodeDemo {
     public static void main(String[] args) throws Exception {
 
         // 注意
-        // 开发中使用
+        // 初始化
         // TronVegasApi.initWithPrivateKey(privateKey);
-        // 用定时调度调用 TronVegasApi.queryFastestNodes();
+        // TronVegasApi.queryFastestNodes();
+        // 用定时调度调用
+        // TronVegasApi.queryFastestNodes();
+
 
         // 以下为测试调试
         final String privateKey = "";
