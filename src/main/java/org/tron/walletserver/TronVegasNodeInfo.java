@@ -1,9 +1,12 @@
 package org.tron.walletserver;
 
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class TronVegasNodeInfo implements Comparable<TronVegasNodeInfo> {
+
     public static final int DEFAULT_NODE_WEIGHT = 10;//各节点默认权重
+    public static final int DEFAULT_NODE_MAX_ERROR_COUNT = 3;//节点最大错误次数
 
     private String host;
 
@@ -14,6 +17,8 @@ public class TronVegasNodeInfo implements Comparable<TronVegasNodeInfo> {
     private int weight;
 
     private GrpcClient client;
+
+    private AtomicInteger errorCount = new AtomicInteger(0);
 
     @Override
     public int compareTo(TronVegasNodeInfo o) {
@@ -85,4 +90,13 @@ public class TronVegasNodeInfo implements Comparable<TronVegasNodeInfo> {
     public void setClient(GrpcClient client) {
         this.client = client;
     }
+
+    public int incErrorCount() {
+        return errorCount.incrementAndGet();
+    }
+
+    public int getErrorCount() {
+        return errorCount.get();
+    }
+
 }

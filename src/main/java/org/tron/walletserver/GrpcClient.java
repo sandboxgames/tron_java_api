@@ -93,6 +93,15 @@ public class GrpcClient {
     }
   }
 
+  public void shutdownNow() throws InterruptedException {
+    if (channelFull != null) {
+      channelFull.shutdownNow();
+    }
+    if (channelSolidity != null) {
+      channelSolidity.shutdownNow();
+    }
+  }
+
   public Account queryAccount(byte[] address) {
     ByteString addressBS = ByteString.copyFrom(address);
     Account request = Account.newBuilder().setAddress(addressBS).build();

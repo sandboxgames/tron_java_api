@@ -18,18 +18,30 @@ public class TronVegasGrpcClientPool {
 
     private static final long QUERY_LIMIT_TIME = 60000;//查询节点总时间(ms)
 
-    private static final long MAX_QUERY_TIME = 1000;//请求节点最大响应时间限制(ms)
+    private static final long MAX_QUERY_TIME = 2000;//请求节点最大响应时间限制(ms)
     private static final int MAX_ERROR_BLOCK_NUM = 2;//请求节点块最大误差范围
 
-    private static final int MAX_NODE_LIMIT = 5;//保留节点数量
+    private static final int MAX_NODE_LIMIT = 3;//保留节点数量
+    private static final int MIN_NODE_LIMIT = 0;//最少节点数量
+
+//    private static final long FREQUENCY_QUERY_LIMIT_TIME = 60000 * 5;//查询节点频率限制(ms)
+    private static final long FREQUENCY_QUERY_LIMIT_TIME = 30000;//查询节点频率限制(ms)
 
 
     public static TronVegasGrpcClientPool instance = new TronVegasGrpcClientPool();
+
     private SortedMap<Long, TronVegasNodeInfo> circle;
+    private ConcurrentSkipListSet<TronVegasNodeInfo> circleSource;
+
     private GrpcClient defaultClient;
     private String defaultFullNode = "";
     private String defaultSolidityNode = "";
     private ScheduledExecutorService scheduledExecutorService;
+    private int maxNodeLimit = MAX_NODE_LIMIT;
+
+    private long lastQueryTime = 0;
+
+    private final Object lock = new Object();
 
     public static TronVegasGrpcClientPool getInstance() {
         return instance;
@@ -58,122 +70,138 @@ public class TronVegasGrpcClientPool {
         }
     }
 
-    public void init(String fullNode, String solidityNode) {
+    public void init(String fullNode, String solidityNode, int maxNodeLimit) {
         this.defaultFullNode = fullNode;
         this.defaultSolidityNode = solidityNode;
+        if(maxNodeLimit > 0){
+            this.maxNodeLimit = maxNodeLimit;
+        }
         this.defaultClient = new GrpcClient(this.defaultFullNode, this.defaultSolidityNode);
     }
 
-    public void queryFastestNodes(QueryNodeCallback queryNodeCallback) {
+    public void queryFastestNodes(QueryNodeCallback queryNodeCallback, boolean forceQuery) {
 
-        if (scheduledExecutorService == null) {
-            scheduledExecutorService = Executors.newScheduledThreadPool(1);
-        }
-
-        Optional<GrpcAPI.NodeList> opNodeList = TronVegasApi.listNodes();
-
-        if (opNodeList == null || !opNodeList.isPresent()) {
+        if(!forceQuery && System.currentTimeMillis() - lastQueryTime < FREQUENCY_QUERY_LIMIT_TIME){
+            logger.info("Query fastest node in limit time");
             return;
         }
 
-        GrpcAPI.NodeList nodeList = opNodeList.get();
-        if (nodeList.getNodesCount() <= 0) {
-            logger.info("No nodes is found");
-            return;
+        synchronized (lock){
+            if(!forceQuery && System.currentTimeMillis() - lastQueryTime < FREQUENCY_QUERY_LIMIT_TIME){
+                logger.info("Query fastest node in limit time");
+                return;
+            }
+            lastQueryTime = System.currentTimeMillis();
         }
 
-        final ExecutorService fixedThreadPool = Executors.newFixedThreadPool(QUERY_NODE_THREAD_NUMBER);
-        final ConcurrentSkipListSet<TronVegasNodeInfo> fullNodeSet = new ConcurrentSkipListSet<>();
+        try {
 
-        for (int index = 0; index < nodeList.getNodesCount(); index++) {
-            final int i = index;
-            fixedThreadPool.execute(() -> {
-                try {
-                    GrpcAPI.Node node = nodeList.getNodes(i);
-                    String ip = node.getAddress().getHost().toStringUtf8();
+            if (scheduledExecutorService == null) {
+                scheduledExecutorService = Executors.newScheduledThreadPool(1);
+            }
 
-                    if (TronVegasGrpcClientPool.crunchifyAddressReachable(node.getAddress().getHost().toStringUtf8(), DEFAULT_GRPC_PORT, CONNECTING_TIMEOUT) <= MAX_QUERY_TIME) {
-                        try {
-                            String host = ip + ":" + DEFAULT_GRPC_PORT;
-                            long time = System.currentTimeMillis();
-                            GrpcClient client = new GrpcClient(host, "");
-                            GrpcAPI.BlockExtention block = client.getBlock2(-1);
-                            long blockNum = block.getBlockHeader().getRawData().getNumber();
-                            TronVegasNodeInfo tNode = new TronVegasNodeInfo();
-                            tNode.setHost(host);
-                            tNode.setBlockNum(blockNum);
-                            tNode.setResponseTime(System.currentTimeMillis() - time);
-                            tNode.setClient(client);
-                            tNode.setWeight(TronVegasNodeInfo.DEFAULT_NODE_WEIGHT);
-                            fullNodeSet.add(tNode);
-                        } catch (Exception ex) {
-                            logger.debug(ex.getMessage());
+            Optional<GrpcAPI.NodeList> opNodeList = TronVegasApi.listNodes();
+
+            if (opNodeList == null || !opNodeList.isPresent()) {
+                return;
+            }
+
+            GrpcAPI.NodeList nodeList = opNodeList.get();
+            if (nodeList.getNodesCount() <= 0) {
+                logger.info("No nodes is found");
+                return;
+            }
+
+            final ExecutorService fixedThreadPool = Executors.newFixedThreadPool(QUERY_NODE_THREAD_NUMBER);
+            final ConcurrentSkipListSet<TronVegasNodeInfo> fullNodeSet = new ConcurrentSkipListSet<>();
+
+            for (int index = 0; index < nodeList.getNodesCount(); index++) {
+                final int i = index;
+                fixedThreadPool.execute(() -> {
+                    try {
+                        GrpcAPI.Node node = nodeList.getNodes(i);
+                        String ip = node.getAddress().getHost().toStringUtf8();
+
+                        if (TronVegasGrpcClientPool.crunchifyAddressReachable(node.getAddress().getHost().toStringUtf8(), DEFAULT_GRPC_PORT, CONNECTING_TIMEOUT) <= MAX_QUERY_TIME) {
+                            try {
+                                String host = ip + ":" + DEFAULT_GRPC_PORT;
+                                long time = System.currentTimeMillis();
+                                GrpcClient client = new GrpcClient(host, "");
+                                GrpcAPI.BlockExtention block = client.getBlock2(-1);
+                                long blockNum = block.getBlockHeader().getRawData().getNumber();
+                                TronVegasNodeInfo tNode = new TronVegasNodeInfo();
+                                tNode.setHost(host);
+                                tNode.setBlockNum(blockNum);
+                                tNode.setResponseTime(System.currentTimeMillis() - time);
+                                tNode.setClient(client);
+                                tNode.setWeight(TronVegasNodeInfo.DEFAULT_NODE_WEIGHT);
+                                fullNodeSet.add(tNode);
+                            } catch (Exception ex) {
+                                logger.debug(ex.getMessage());
+                            }
+                        } else {
+                            logger.debug(ip + " can't be connected");
                         }
-                    } else {
-                        logger.debug(ip + " can't be connected");
+                    } catch (Exception ex) {
+                        logger.debug(ex.getMessage());
+                    }
+                });
+            }
+
+            scheduledExecutorService.schedule(() -> {
+                try {
+
+                    fixedThreadPool.shutdownNow();
+
+                    Set<TronVegasNodeInfo> tempSet = new HashSet<>();
+
+                    for (TronVegasNodeInfo entry : fullNodeSet) {
+                        if (entry.getResponseTime() >= MAX_QUERY_TIME) {
+                            tempSet.add(entry);
+                            safeReleaseNode(entry);
+                        }
+//                    logger.info("Host: " + entry.getHost() + " RTime:" + entry.getResponseTime() + " BlockNum:" + entry.getBlockNum());
+                    }
+                    fullNodeSet.removeAll(tempSet);
+                    tempSet.clear();
+
+                    long maxBlockNum = 0;
+                    for (TronVegasNodeInfo entry : fullNodeSet) {
+                        if (entry.getBlockNum() > maxBlockNum) {
+                            maxBlockNum = entry.getBlockNum();
+                        }
+                    }
+                    for (TronVegasNodeInfo entry : fullNodeSet) {
+                        if (entry.getBlockNum() < (maxBlockNum - MAX_ERROR_BLOCK_NUM)) {
+                            tempSet.add(entry);
+                            safeReleaseNode(entry);
+                        }
+                    }
+                    fullNodeSet.removeAll(tempSet);
+                    tempSet.clear();
+
+                    int index = 0;
+                    for (TronVegasNodeInfo entry : fullNodeSet) {
+                        index++;
+                        if (index > maxNodeLimit) {
+                            tempSet.add(entry);
+                            safeReleaseNode(entry);
+                        }
+                    }
+                    fullNodeSet.removeAll(tempSet);
+                    tempSet.clear();
+
+                    initNodes(fullNodeSet);
+                    if (queryNodeCallback != null) {
+                        queryNodeCallback.finish(fullNodeSet);
                     }
                 } catch (Exception ex) {
-                    logger.debug(ex.getMessage());
+                    logger.error("QueryFastestNodes Schedule ERROR", ex);
                 }
-            });
+            }, QUERY_LIMIT_TIME, TimeUnit.MILLISECONDS);
+        } catch (Exception ex) {
+            logger.error("QueryFastestNodes ERROR", ex);
         }
-
-        scheduledExecutorService.schedule(() -> {
-            try {
-
-                fixedThreadPool.shutdownNow();
-
-                Set<TronVegasNodeInfo> tempSet = new HashSet<>();
-
-                for (TronVegasNodeInfo entry : fullNodeSet) {
-                    if (entry.getResponseTime() >= MAX_QUERY_TIME) {
-                        tempSet.add(entry);
-                        safeReleaseNode(entry);
-                    }
-//                    logger.info("Host: " + entry.getHost() + " RTime:" + entry.getResponseTime() + " BlockNum:" + entry.getBlockNum());
-                }
-                fullNodeSet.removeAll(tempSet);
-                tempSet.clear();
-
-                long maxBlockNum = 0;
-                for (TronVegasNodeInfo entry : fullNodeSet) {
-                    if (entry.getBlockNum() > maxBlockNum) {
-                        maxBlockNum = entry.getBlockNum();
-                    }
-                }
-                for (TronVegasNodeInfo entry : fullNodeSet) {
-                    if (entry.getBlockNum() < (maxBlockNum - MAX_ERROR_BLOCK_NUM)) {
-                        tempSet.add(entry);
-                        safeReleaseNode(entry);
-                    }
-                }
-                fullNodeSet.removeAll(tempSet);
-                tempSet.clear();
-
-                int index = 0;
-                for (TronVegasNodeInfo entry : fullNodeSet) {
-                    index++;
-                    if(index > MAX_NODE_LIMIT){
-                        tempSet.add(entry);
-                        safeReleaseNode(entry);
-                    }
-//                    logger.info("Host: " + entry.getHost() + " RTime:" + entry.getResponseTime() + " BlockNum:" + entry.getBlockNum());
-                }
-                fullNodeSet.removeAll(tempSet);
-                tempSet.clear();
-
-//                logger.info("-------------------------------------------------------");
-//                for (TronVegasNodeInfo entry : fullNodeSet) {
-//                    logger.info("Host: " + entry.getHost() + " RTime:" + entry.getResponseTime() + " BlockNum:" + entry.getBlockNum());
-//                }
-                initNodes(fullNodeSet);
-                if(queryNodeCallback != null){
-                    queryNodeCallback.finish(fullNodeSet);
-                }
-            } catch (Exception ex) {
-                logger.error("QueryFastestNodes ERROR", ex);
-            }
-        }, QUERY_LIMIT_TIME, TimeUnit.MILLISECONDS);
     }
 
     private void safeReleaseNode(TronVegasNodeInfo nodeInfo) {
@@ -182,13 +210,13 @@ public class TronVegasGrpcClientPool {
         }
 
         try {
-            nodeInfo.getClient().shutdown();
+            nodeInfo.getClient().shutdownNow();
         } catch (Exception ex) {
             logger.info("SafeReleaseNode ERROR", ex);
         }
     }
 
-    public void initNodes(Collection<TronVegasNodeInfo> nodes) {
+    public void initNodes(ConcurrentSkipListSet<TronVegasNodeInfo> nodes) {
         if (nodes == null || nodes.size() <= 0) {
             return;
         }
@@ -200,7 +228,27 @@ public class TronVegasGrpcClientPool {
 
         SortedMap<Long, TronVegasNodeInfo> oldCircle = this.circle;
         this.circle = newCircle;
+        this.circleSource = nodes;
         release(oldCircle);
+    }
+
+    public void remove(TronVegasNodeInfo node){
+        if(circle == null || circleSource == null){
+            return;
+        }
+
+        if(circleSource.remove(node)){
+            SortedMap<Long, TronVegasNodeInfo> newCircle = new TreeMap<>();
+            for (TronVegasNodeInfo n : circleSource) {
+                add(newCircle, n);
+            }
+            this.circle = newCircle;
+        }
+
+        if(circleSource.size() <= MIN_NODE_LIMIT){
+            TronVegasGrpcClientPool.getInstance().queryFastestNodes(null, false);
+        }
+        safeReleaseNode(node);
     }
 
     public GrpcClient borrow() {
@@ -211,7 +259,7 @@ public class TronVegasGrpcClientPool {
         return defaultClient;
     }
 
-    private TronVegasNodeInfo get(Object key) {
+    public TronVegasNodeInfo get(Object key) {
         if (circle == null || circle.isEmpty()) {
             return null;
         }
@@ -226,10 +274,10 @@ public class TronVegasGrpcClientPool {
     public void shutdown() {
         try {
             release(this.circle);
-            if(scheduledExecutorService != null){
+            if (scheduledExecutorService != null) {
                 scheduledExecutorService.shutdownNow();
             }
-        }catch (Exception ex){
+        } catch (Exception ex) {
             logger.error("Shutdown ERROR", ex);
         }
     }

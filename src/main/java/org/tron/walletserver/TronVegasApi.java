@@ -11,14 +11,7 @@ import com.typesafe.config.ConfigObject;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Scanner;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -121,11 +114,16 @@ public class TronVegasApi {
             rpcVersion = config.getInt("RPC_version");
         }
 
-        TronVegasGrpcClientPool.getInstance().init(fullNode, solidityNode);
+        int maxNodeLimit = 0;
+        if (config.hasPath("MAX_NODE_LIMIT")){
+            maxNodeLimit = config.getInt("MAX_NODE_LIMIT");
+        }
+
+        TronVegasGrpcClientPool.getInstance().init(fullNode, solidityNode, maxNodeLimit);
     }
 
     public static void queryFastestNodes(){
-        TronVegasGrpcClientPool.getInstance().queryFastestNodes(null);
+        TronVegasGrpcClientPool.getInstance().queryFastestNodes(null, false);
     }
 
     public static byte getAddressPreFixByte() {
@@ -194,6 +192,32 @@ public class TronVegasApi {
     public static AddressPrKeyPairMessage generateAddress() {
         EmptyMessage.Builder builder = EmptyMessage.newBuilder();
         return TronVegasGrpcClientPool.getInstance().borrow().generateAddress(builder.build());
+    }
+
+    public static BlockExtention getNowBlock(){
+        BlockExtention block = null;
+
+        TronVegasNodeInfo node = TronVegasGrpcClientPool.getInstance().get(UUID.randomUUID().toString());
+        GrpcClient client = null;
+
+        if(node != null && node.getClient() != null){
+            client = node.getClient();
+        }else {
+            client = TronVegasGrpcClientPool.getInstance().borrow();
+        }
+
+        try{
+            block = client.getBlock2(-1);
+//            if(node != null && node.getClient() != null){
+//                logger.info("From " + node.getHost());
+//            }
+        }catch (Exception ex){
+//            logger.info("getNowBlock ERROR", ex);
+            if(node != null && node.incErrorCount() > TronVegasNodeInfo.DEFAULT_NODE_MAX_ERROR_COUNT){
+                TronVegasGrpcClientPool.getInstance().remove(node);
+            }
+        }
+        return block;
     }
 
     public static Block getBlock(long blockNum) {
