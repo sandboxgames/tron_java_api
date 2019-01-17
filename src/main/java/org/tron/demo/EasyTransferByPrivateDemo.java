@@ -2,9 +2,7 @@ package org.tron.demo;
 
 import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Utils;
-import org.tron.protos.Protocol.Transaction;
-import org.tron.walletserver.WalletApi;
+import org.tron.walletserver.TronVegasApi;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -23,7 +21,7 @@ public class EasyTransferByPrivateDemo {
         String privateKey = "53DA77E817FC18BDDED706DFD242B3F1DA86CFF38A385DB4B0B223D73A5B8A09";
         String toAddress = "TZHspmV9EtRiXKmyoReYPFRNQbf2ekoUCX";
 
-
+        TronVegasApi.initWithPrivateKey(privateKey);
         ExecutorService fixedThreadPool = Executors.newFixedThreadPool(1000);
 
         long time1 = System.currentTimeMillis();
@@ -31,9 +29,9 @@ public class EasyTransferByPrivateDemo {
             fixedThreadPool.execute(new Runnable() {
                 public void run() {
                     try {
-                        EasyTransferResponse response = WalletApi
+                        EasyTransferResponse response = TronVegasApi
                                 .easyTransferByPrivate(ByteArray.fromHexString(privateKey),
-                                        WalletApi.decodeFromBase58Check(toAddress), 1L);
+                                        TronVegasApi.decodeFromBase58Check(toAddress), 1L);
 
 //                        if (response.getResult().getResult()) {
 //                            Transaction transaction = response.getTransaction();

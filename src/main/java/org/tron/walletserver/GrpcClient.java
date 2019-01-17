@@ -281,9 +281,9 @@ public class GrpcClient {
       String toAddress) {
 
     ByteString fromAddressBS = ByteString.copyFrom(
-        Objects.requireNonNull(WalletApi.decodeFromBase58Check(fromAddress)));
+        Objects.requireNonNull(TronVegasApi.decodeFromBase58Check(fromAddress)));
     ByteString toAddressBS = ByteString.copyFrom(
-        Objects.requireNonNull(WalletApi.decodeFromBase58Check(toAddress)));
+        Objects.requireNonNull(TronVegasApi.decodeFromBase58Check(toAddress)));
 
     DelegatedResourceMessage request = DelegatedResourceMessage.newBuilder()
         .setFromAddress(fromAddressBS)
@@ -297,7 +297,7 @@ public class GrpcClient {
   public Optional<DelegatedResourceAccountIndex> getDelegatedResourceAccountIndex(String address) {
 
     ByteString addressBS = ByteString.copyFrom(
-        Objects.requireNonNull(WalletApi.decodeFromBase58Check(address)));
+        Objects.requireNonNull(TronVegasApi.decodeFromBase58Check(address)));
 
     BytesMessage bytesMessage = BytesMessage.newBuilder().setValue(addressBS).build();
 

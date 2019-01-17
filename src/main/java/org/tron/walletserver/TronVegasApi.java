@@ -93,15 +93,15 @@ public class TronVegasApi {
     private static final Logger logger = LoggerFactory.getLogger("TronVegasApi");
     private static byte addressPreFixByte = CommonConstant.ADD_PRE_FIX_BYTE_TESTNET;
     private static int rpcVersion = 0;
-    private static GrpcClient rpcCli = init();
 
     private static ECKey ecKey = null;
 
     public static void initWithPrivateKey(String privateKey) {
         ecKey = ECKey.fromPrivate(ByteArray.fromHexString(privateKey));
+        init();
     }
 
-    public static GrpcClient init() {
+    public static void init() {
         Config config = Configuration.getByPath("config.conf");
 
         String fullNode = "";
@@ -113,14 +113,19 @@ public class TronVegasApi {
             fullNode = config.getStringList("fullnode.ip.list").get(0);
         }
         if (config.hasPath("net.type") && "mainnet".equalsIgnoreCase(config.getString("net.type"))) {
-            WalletApi.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+            TronVegasApi.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
         } else {
-            WalletApi.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_TESTNET);
+            TronVegasApi.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_TESTNET);
         }
         if (config.hasPath("RPC_version")) {
             rpcVersion = config.getInt("RPC_version");
         }
-        return new GrpcClient(fullNode, solidityNode);
+
+        TronVegasGrpcClientPool.getInstance().init(fullNode, solidityNode);
+    }
+
+    public static void queryFastestNodes(){
+        TronVegasGrpcClientPool.getInstance().queryFastestNodes(null);
     }
 
     public static byte getAddressPreFixByte() {
@@ -137,11 +142,11 @@ public class TronVegasApi {
 
 
     public static Account queryAccount(byte[] address) {
-        return rpcCli.queryAccount(address);//call rpc
+        return TronVegasGrpcClientPool.getInstance().borrow().queryAccount(address);//call rpc
     }
 
     public static Account queryAccountById(String accountId) {
-        return rpcCli.queryAccountById(accountId);
+        return TronVegasGrpcClientPool.getInstance().borrow().queryAccountById(accountId);
     }
 
     //Warning: do not invoke this interface provided by others.
@@ -149,7 +154,7 @@ public class TronVegasApi {
         TransactionSign.Builder builder = TransactionSign.newBuilder();
         builder.setPrivateKey(ByteString.copyFrom(privateKey));
         builder.setTransaction(transaction);
-        return rpcCli.signTransaction(builder.build());
+        return TronVegasGrpcClientPool.getInstance().borrow().signTransaction(builder.build());
     }
 
     //Warning: do not invoke this interface provided by others.
@@ -158,49 +163,49 @@ public class TronVegasApi {
         TransactionSign.Builder builder = TransactionSign.newBuilder();
         builder.setPrivateKey(ByteString.copyFrom(privateKey));
         builder.setTransaction(transaction);
-        return rpcCli.signTransaction2(builder.build());
+        return TronVegasGrpcClientPool.getInstance().borrow().signTransaction2(builder.build());
     }
 
     //Warning: do not invoke this interface provided by others.
     public static byte[] createAdresss(byte[] passPhrase) {
-        return rpcCli.createAdresss(passPhrase);
+        return TronVegasGrpcClientPool.getInstance().borrow().createAdresss(passPhrase);
     }
 
     //Warning: do not invoke this interface provided by others.
     public static EasyTransferResponse easyTransfer(byte[] passPhrase, byte[] toAddress,
                                                     long amount) {
-        return rpcCli.easyTransfer(passPhrase, toAddress, amount);
+        return TronVegasGrpcClientPool.getInstance().borrow().easyTransfer(passPhrase, toAddress, amount);
     }
 
     //Warning: do not invoke this interface provided by others.
     public static EasyTransferResponse easyTransferByPrivate(byte[] privateKey, byte[] toAddress,
                                                              long amount) {
-        return rpcCli.easyTransferByPrivate(privateKey, toAddress, amount);
+        return TronVegasGrpcClientPool.getInstance().borrow().easyTransferByPrivate(privateKey, toAddress, amount);
     }
 
     public static boolean broadcastTransaction(byte[] transactionBytes)
             throws InvalidProtocolBufferException {
         Transaction transaction = Transaction.parseFrom(transactionBytes);
         return TransactionUtils.validTransaction(transaction)
-                && rpcCli.broadcastTransaction(transaction);
+                && TronVegasGrpcClientPool.getInstance().borrow().broadcastTransaction(transaction);
     }
 
     //Warning: do not invoke this interface provided by others.
     public static AddressPrKeyPairMessage generateAddress() {
         EmptyMessage.Builder builder = EmptyMessage.newBuilder();
-        return rpcCli.generateAddress(builder.build());
+        return TronVegasGrpcClientPool.getInstance().borrow().generateAddress(builder.build());
     }
 
     public static Block getBlock(long blockNum) {
-        return rpcCli.getBlock(blockNum);
+        return TronVegasGrpcClientPool.getInstance().borrow().getBlock(blockNum);
     }
 
     public static BlockExtention getBlock2(long blockNum) {
-        return rpcCli.getBlock2(blockNum);
+        return TronVegasGrpcClientPool.getInstance().borrow().getBlock2(blockNum);
     }
 
     public static long getTransactionCountByBlockNum(long blockNum) {
-        return rpcCli.getTransactionCountByBlockNum(blockNum);
+        return TronVegasGrpcClientPool.getInstance().borrow().getTransactionCountByBlockNum(blockNum);
     }
 
     public static Contract.TransferContract createTransferContract(byte[] to, byte[] owner,
@@ -323,7 +328,7 @@ public class TronVegasApi {
             long count = Long.parseLong(value);
             Contract.VoteWitnessContract.Vote.Builder voteBuilder = Contract.VoteWitnessContract.Vote
                     .newBuilder();
-            byte[] address = WalletApi.decodeFromBase58Check(addressBase58);
+            byte[] address = TronVegasApi.decodeFromBase58Check(addressBase58);
             if (address == null) {
                 continue;
             }
@@ -347,9 +352,9 @@ public class TronVegasApi {
             return false;
         }
         byte preFixbyte = address[0];
-        if (preFixbyte != WalletApi.getAddressPreFixByte()) {
+        if (preFixbyte != TronVegasApi.getAddressPreFixByte()) {
             logger
-                    .warn("Warning: Address need prefix with " + WalletApi.getAddressPreFixByte() + " but "
+                    .warn("Warning: Address need prefix with " + TronVegasApi.getAddressPreFixByte() + " but "
                             + preFixbyte + " !!");
             return false;
         }
@@ -410,7 +415,7 @@ public class TronVegasApi {
     }
 
     public static Optional<WitnessList> listWitnesses() {
-        Optional<WitnessList> result = rpcCli.listWitnesses();
+        Optional<WitnessList> result = TronVegasGrpcClientPool.getInstance().borrow().listWitnesses();
         if (result.isPresent()) {
             WitnessList witnessList = result.get();
             List<Witness> list = witnessList.getWitnessesList();
@@ -430,134 +435,134 @@ public class TronVegasApi {
     }
 
     public static Optional<AssetIssueList> getAssetIssueList() {
-        return rpcCli.getAssetIssueList();
+        return TronVegasGrpcClientPool.getInstance().borrow().getAssetIssueList();
     }
 
     public static Optional<AssetIssueList> getAssetIssueList(long offset, long limit) {
-        return rpcCli.getAssetIssueList(offset, limit);
+        return TronVegasGrpcClientPool.getInstance().borrow().getAssetIssueList(offset, limit);
     }
 
     public static Optional<ProposalList> getProposalListPaginated(long offset, long limit) {
-        return rpcCli.getProposalListPaginated(offset, limit);
+        return TronVegasGrpcClientPool.getInstance().borrow().getProposalListPaginated(offset, limit);
     }
 
     public static Optional<ExchangeList> getExchangeListPaginated(long offset, long limit) {
-        return rpcCli.getExchangeListPaginated(offset, limit);
+        return TronVegasGrpcClientPool.getInstance().borrow().getExchangeListPaginated(offset, limit);
     }
 
     public static Optional<NodeList> listNodes() {
-        return rpcCli.listNodes();
+        return TronVegasGrpcClientPool.getInstance().borrow().listNodes();
     }
 
     public static Optional<AssetIssueList> getAssetIssueByAccount(byte[] address) {
-        return rpcCli.getAssetIssueByAccount(address);
+        return TronVegasGrpcClientPool.getInstance().borrow().getAssetIssueByAccount(address);
     }
 
     public static AccountNetMessage getAccountNet(byte[] address) {
-        return rpcCli.getAccountNet(address);
+        return TronVegasGrpcClientPool.getInstance().borrow().getAccountNet(address);
     }
 
     public static AccountResourceMessage getAccountResource(byte[] address) {
-        return rpcCli.getAccountResource(address);
+        return TronVegasGrpcClientPool.getInstance().borrow().getAccountResource(address);
     }
 
     public static AssetIssueContract getAssetIssueByName(String assetName) {
-        return rpcCli.getAssetIssueByName(assetName);
+        return TronVegasGrpcClientPool.getInstance().borrow().getAssetIssueByName(assetName);
     }
 
     public static Optional<AssetIssueList> getAssetIssueListByName(String assetName) {
-        return rpcCli.getAssetIssueListByName(assetName);
+        return TronVegasGrpcClientPool.getInstance().borrow().getAssetIssueListByName(assetName);
     }
 
     public static AssetIssueContract getAssetIssueById(String assetId) {
-        return rpcCli.getAssetIssueById(assetId);
+        return TronVegasGrpcClientPool.getInstance().borrow().getAssetIssueById(assetId);
     }
 
     public static GrpcAPI.NumberMessage getTotalTransaction() {
-        return rpcCli.getTotalTransaction();
+        return TronVegasGrpcClientPool.getInstance().borrow().getTotalTransaction();
     }
 
     public static GrpcAPI.NumberMessage getNextMaintenanceTime() {
-        return rpcCli.getNextMaintenanceTime();
+        return TronVegasGrpcClientPool.getInstance().borrow().getNextMaintenanceTime();
     }
 
     public static Optional<TransactionList> getTransactionsFromThis(byte[] address, int offset,
                                                                     int limit) {
-        return rpcCli.getTransactionsFromThis(address, offset, limit);
+        return TronVegasGrpcClientPool.getInstance().borrow().getTransactionsFromThis(address, offset, limit);
     }
 
     public static Optional<TransactionListExtention> getTransactionsFromThis2(byte[] address,
                                                                               int offset,
                                                                               int limit) {
-        return rpcCli.getTransactionsFromThis2(address, offset, limit);
+        return TronVegasGrpcClientPool.getInstance().borrow().getTransactionsFromThis2(address, offset, limit);
     }
 
     public static Optional<TransactionList> getTransactionsToThis(byte[] address, int offset,
                                                                   int limit) {
-        return rpcCli.getTransactionsToThis(address, offset, limit);
+        return TronVegasGrpcClientPool.getInstance().borrow().getTransactionsToThis(address, offset, limit);
     }
 
     public static Optional<TransactionListExtention> getTransactionsToThis2(byte[] address,
                                                                             int offset,
                                                                             int limit) {
-        return rpcCli.getTransactionsToThis2(address, offset, limit);
+        return TronVegasGrpcClientPool.getInstance().borrow().getTransactionsToThis2(address, offset, limit);
     }
 
     public static Optional<Transaction> getTransactionById(String txID) {
-        return rpcCli.getTransactionById(txID);
+        return TronVegasGrpcClientPool.getInstance().borrow().getTransactionById(txID);
     }
 
     public static Optional<TransactionInfo> getTransactionInfoById(String txID) {
-        return rpcCli.getTransactionInfoById(txID);
+        return TronVegasGrpcClientPool.getInstance().borrow().getTransactionInfoById(txID);
     }
 
     public static Optional<Block> getBlockById(String blockID) {
-        return rpcCli.getBlockById(blockID);
+        return TronVegasGrpcClientPool.getInstance().borrow().getBlockById(blockID);
     }
 
     public static Optional<BlockList> getBlockByLimitNext(long start, long end) {
-        return rpcCli.getBlockByLimitNext(start, end);
+        return TronVegasGrpcClientPool.getInstance().borrow().getBlockByLimitNext(start, end);
     }
 
     public static Optional<BlockListExtention> getBlockByLimitNext2(long start, long end) {
-        return rpcCli.getBlockByLimitNext2(start, end);
+        return TronVegasGrpcClientPool.getInstance().borrow().getBlockByLimitNext2(start, end);
     }
 
     public static Optional<BlockList> getBlockByLatestNum(long num) {
-        return rpcCli.getBlockByLatestNum(num);
+        return TronVegasGrpcClientPool.getInstance().borrow().getBlockByLatestNum(num);
     }
 
     public static Optional<BlockListExtention> getBlockByLatestNum2(long num) {
-        return rpcCli.getBlockByLatestNum2(num);
+        return TronVegasGrpcClientPool.getInstance().borrow().getBlockByLatestNum2(num);
     }
 
     public static Optional<ProposalList> listProposals() {
-        return rpcCli.listProposals();
+        return TronVegasGrpcClientPool.getInstance().borrow().listProposals();
     }
 
     public static Optional<Proposal> getProposal(String id) {
-        return rpcCli.getProposal(id);
+        return TronVegasGrpcClientPool.getInstance().borrow().getProposal(id);
     }
 
     public static Optional<DelegatedResourceList> getDelegatedResource(String fromAddress,
                                                                        String toAddress) {
-        return rpcCli.getDelegatedResource(fromAddress, toAddress);
+        return TronVegasGrpcClientPool.getInstance().borrow().getDelegatedResource(fromAddress, toAddress);
     }
 
     public static Optional<DelegatedResourceAccountIndex> getDelegatedResourceAccountIndex(String address) {
-        return rpcCli.getDelegatedResourceAccountIndex(address);
+        return TronVegasGrpcClientPool.getInstance().borrow().getDelegatedResourceAccountIndex(address);
     }
 
     public static Optional<ExchangeList> listExchanges() {
-        return rpcCli.listExchanges();
+        return TronVegasGrpcClientPool.getInstance().borrow().listExchanges();
     }
 
     public static Optional<Exchange> getExchange(String id) {
-        return rpcCli.getExchange(id);
+        return TronVegasGrpcClientPool.getInstance().borrow().getExchange(id);
     }
 
     public static Optional<ChainParameters> getChainParameters() {
-        return rpcCli.getChainParameters();
+        return TronVegasGrpcClientPool.getInstance().borrow().getChainParameters();
     }
 
     public static Contract.ProposalCreateContract createProposalCreateContract(byte[] owner,
@@ -836,7 +841,7 @@ public class TronVegasApi {
             String addr = cur.substring(lastPosition + 1);
             String libraryAddressHex;
             try {
-                libraryAddressHex = (new String(Hex.encode(WalletApi.decodeFromBase58Check(addr)),
+                libraryAddressHex = (new String(Hex.encode(TronVegasApi.decodeFromBase58Check(addr)),
                         "US-ASCII")).substring(2);
             } catch (UnsupportedEncodingException e) {
                 throw new RuntimeException(e);  // now ignore
@@ -866,7 +871,7 @@ public class TronVegasApi {
     }
 
     public static SmartContract getContract(byte[] address) {
-        return rpcCli.getContract(address);
+        return TronVegasGrpcClientPool.getInstance().borrow().getContract(address);
     }
 
 
@@ -906,7 +911,7 @@ public class TronVegasApi {
         logger.debug(
                 "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
         transaction = signTransaction(transaction);
-        return rpcCli.broadcastTransaction(transaction);
+        return TronVegasGrpcClientPool.getInstance().borrow().broadcastTransaction(transaction);
     }
 
     private static boolean processTransaction(Transaction transaction)
@@ -915,7 +920,7 @@ public class TronVegasApi {
             return false;
         }
         transaction = signTransaction(transaction);
-        return rpcCli.broadcastTransaction(transaction);
+        return TronVegasGrpcClientPool.getInstance().borrow().broadcastTransaction(transaction);
     }
 
     public static boolean sendCoin(byte[] to, long amount)
@@ -923,10 +928,10 @@ public class TronVegasApi {
         byte[] owner = getAddress();
         Contract.TransferContract contract = createTransferContract(to, owner, amount);
         if (rpcVersion == 2) {
-            TransactionExtention transactionExtention = rpcCli.createTransaction2(contract);
+            TransactionExtention transactionExtention = TronVegasGrpcClientPool.getInstance().borrow().createTransaction2(contract);
             return processTransactionExtention(transactionExtention);
         } else {
-            Transaction transaction = rpcCli.createTransaction(contract);
+            Transaction transaction = TronVegasGrpcClientPool.getInstance().borrow().createTransaction(contract);
             return processTransaction(transaction);
         }
     }
@@ -936,10 +941,10 @@ public class TronVegasApi {
         byte[] owner = getAddress();
         Contract.AccountUpdateContract contract = createAccountUpdateContract(accountNameBytes, owner);
         if (rpcVersion == 2) {
-            TransactionExtention transactionExtention = rpcCli.createTransaction2(contract);
+            TransactionExtention transactionExtention = TronVegasGrpcClientPool.getInstance().borrow().createTransaction2(contract);
             return processTransactionExtention(transactionExtention);
         } else {
-            Transaction transaction = rpcCli.createTransaction(contract);
+            Transaction transaction = TronVegasGrpcClientPool.getInstance().borrow().createTransaction(contract);
             return processTransaction(transaction);
         }
     }
@@ -947,15 +952,16 @@ public class TronVegasApi {
     public static boolean setAccountId(byte[] accountIdBytes)
             throws CipherException, IOException, CancelException {
         byte[] owner = getAddress();
+        GrpcClient client = TronVegasGrpcClientPool.getInstance().borrow();
         Contract.SetAccountIdContract contract = createSetAccountIdContract(accountIdBytes, owner);
-        Transaction transaction = rpcCli.createTransaction(contract);
+        Transaction transaction = client.createTransaction(contract);
 
         if (transaction == null || transaction.getRawData().getContractCount() == 0) {
             return false;
         }
 
         transaction = signTransaction(transaction);
-        return rpcCli.broadcastTransaction(transaction);
+        return client.broadcastTransaction(transaction);
     }
 
     public static boolean updateAsset(byte[] description, byte[] url, long newLimit,
@@ -965,10 +971,10 @@ public class TronVegasApi {
         Contract.UpdateAssetContract contract
                 = createUpdateAssetContract(owner, description, url, newLimit, newPublicLimit);
         if (rpcVersion == 2) {
-            TransactionExtention transactionExtention = rpcCli.createTransaction2(contract);
+            TransactionExtention transactionExtention = TronVegasGrpcClientPool.getInstance().borrow().createTransaction2(contract);
             return processTransactionExtention(transactionExtention);
         } else {
-            Transaction transaction = rpcCli.createTransaction(contract);
+            Transaction transaction = TronVegasGrpcClientPool.getInstance().borrow().createTransaction(contract);
             return processTransaction(transaction);
         }
     }
@@ -979,10 +985,10 @@ public class TronVegasApi {
         Contract.TransferAssetContract contract = createTransferAssetContract(to, assertName, owner,
                 amount);
         if (rpcVersion == 2) {
-            TransactionExtention transactionExtention = rpcCli.createTransferAssetTransaction2(contract);
+            TransactionExtention transactionExtention = TronVegasGrpcClientPool.getInstance().borrow().createTransferAssetTransaction2(contract);
             return processTransactionExtention(transactionExtention);
         } else {
-            Transaction transaction = rpcCli.createTransferAssetTransaction(contract);
+            Transaction transaction = TronVegasGrpcClientPool.getInstance().borrow().createTransferAssetTransaction(contract);
             return processTransaction(transaction);
         }
     }
@@ -993,11 +999,11 @@ public class TronVegasApi {
         Contract.ParticipateAssetIssueContract contract = participateAssetIssueContract(to, assertName,
                 owner, amount);
         if (rpcVersion == 2) {
-            TransactionExtention transactionExtention = rpcCli
+            TransactionExtention transactionExtention = TronVegasGrpcClientPool.getInstance().borrow()
                     .createParticipateAssetIssueTransaction2(contract);
             return processTransactionExtention(transactionExtention);
         } else {
-            Transaction transaction = rpcCli.createParticipateAssetIssueTransaction(contract);
+            Transaction transaction = TronVegasGrpcClientPool.getInstance().borrow().createParticipateAssetIssueTransaction(contract);
             return processTransaction(transaction);
         }
     }
@@ -1005,10 +1011,10 @@ public class TronVegasApi {
     public static boolean createAssetIssue(Contract.AssetIssueContract contract)
             throws CipherException, IOException, CancelException {
         if (rpcVersion == 2) {
-            TransactionExtention transactionExtention = rpcCli.createAssetIssue2(contract);
+            TransactionExtention transactionExtention = TronVegasGrpcClientPool.getInstance().borrow().createAssetIssue2(contract);
             return processTransactionExtention(transactionExtention);
         } else {
-            Transaction transaction = rpcCli.createAssetIssue(contract);
+            Transaction transaction = TronVegasGrpcClientPool.getInstance().borrow().createAssetIssue(contract);
             return processTransaction(transaction);
         }
     }
@@ -1018,10 +1024,10 @@ public class TronVegasApi {
         byte[] owner = getAddress();
         Contract.AccountCreateContract contract = createAccountCreateContract(owner, address);
         if (rpcVersion == 2) {
-            TransactionExtention transactionExtention = rpcCli.createAccount2(contract);
+            TransactionExtention transactionExtention = TronVegasGrpcClientPool.getInstance().borrow().createAccount2(contract);
             return processTransactionExtention(transactionExtention);
         } else {
-            Transaction transaction = rpcCli.createAccount(contract);
+            Transaction transaction = TronVegasGrpcClientPool.getInstance().borrow().createAccount(contract);
             return processTransaction(transaction);
         }
     }
@@ -1030,10 +1036,10 @@ public class TronVegasApi {
         byte[] owner = getAddress();
         Contract.WitnessCreateContract contract = createWitnessCreateContract(owner, url);
         if (rpcVersion == 2) {
-            TransactionExtention transactionExtention = rpcCli.createWitness2(contract);
+            TransactionExtention transactionExtention = TronVegasGrpcClientPool.getInstance().borrow().createWitness2(contract);
             return processTransactionExtention(transactionExtention);
         } else {
-            Transaction transaction = rpcCli.createWitness(contract);
+            Transaction transaction = TronVegasGrpcClientPool.getInstance().borrow().createWitness(contract);
             return processTransaction(transaction);
         }
     }
@@ -1042,10 +1048,10 @@ public class TronVegasApi {
         byte[] owner = getAddress();
         Contract.WitnessUpdateContract contract = createWitnessUpdateContract(owner, url);
         if (rpcVersion == 2) {
-            TransactionExtention transactionExtention = rpcCli.updateWitness2(contract);
+            TransactionExtention transactionExtention = TronVegasGrpcClientPool.getInstance().borrow().updateWitness2(contract);
             return processTransactionExtention(transactionExtention);
         } else {
-            Transaction transaction = rpcCli.updateWitness(contract);
+            Transaction transaction = TronVegasGrpcClientPool.getInstance().borrow().updateWitness(contract);
             return processTransaction(transaction);
         }
     }
@@ -1055,10 +1061,10 @@ public class TronVegasApi {
         byte[] owner = getAddress();
         Contract.VoteWitnessContract contract = createVoteWitnessContract(owner, witness);
         if (rpcVersion == 2) {
-            TransactionExtention transactionExtention = rpcCli.voteWitnessAccount2(contract);
+            TransactionExtention transactionExtention = TronVegasGrpcClientPool.getInstance().borrow().voteWitnessAccount2(contract);
             return processTransactionExtention(transactionExtention);
         } else {
-            Transaction transaction = rpcCli.voteWitnessAccount(contract);
+            Transaction transaction = TronVegasGrpcClientPool.getInstance().borrow().voteWitnessAccount(contract);
             return processTransaction(transaction);
         }
     }
@@ -1069,10 +1075,10 @@ public class TronVegasApi {
         Contract.FreezeBalanceContract contract = createFreezeBalanceContract(frozen_balance,
                 frozen_duration, resourceCode, receiverAddress);
         if (rpcVersion == 2) {
-            TransactionExtention transactionExtention = rpcCli.createTransaction2(contract);
+            TransactionExtention transactionExtention = TronVegasGrpcClientPool.getInstance().borrow().createTransaction2(contract);
             return processTransactionExtention(transactionExtention);
         } else {
-            Transaction transaction = rpcCli.createTransaction(contract);
+            Transaction transaction = TronVegasGrpcClientPool.getInstance().borrow().createTransaction(contract);
             return processTransaction(transaction);
         }
     }
@@ -1080,21 +1086,21 @@ public class TronVegasApi {
     public static boolean buyStorage(long quantity)
             throws CipherException, IOException, CancelException {
         Contract.BuyStorageContract contract = createBuyStorageContract(quantity);
-        TransactionExtention transactionExtention = rpcCli.createTransaction(contract);
+        TransactionExtention transactionExtention = TronVegasGrpcClientPool.getInstance().borrow().createTransaction(contract);
         return processTransactionExtention(transactionExtention);
     }
 
     public static boolean buyStorageBytes(long bytes)
             throws CipherException, IOException, CancelException {
         Contract.BuyStorageBytesContract contract = createBuyStorageBytesContract(bytes);
-        TransactionExtention transactionExtention = rpcCli.createTransaction(contract);
+        TransactionExtention transactionExtention = TronVegasGrpcClientPool.getInstance().borrow().createTransaction(contract);
         return processTransactionExtention(transactionExtention);
     }
 
     public static boolean sellStorage(long storageBytes)
             throws CipherException, IOException, CancelException {
         Contract.SellStorageContract contract = createSellStorageContract(storageBytes);
-        TransactionExtention transactionExtention = rpcCli.createTransaction(contract);
+        TransactionExtention transactionExtention = TronVegasGrpcClientPool.getInstance().borrow().createTransaction(contract);
         return processTransactionExtention(transactionExtention);
 
     }
@@ -1109,7 +1115,7 @@ public class TronVegasApi {
 
         if (receiverAddress != null && !receiverAddress.equals("")) {
             ByteString receiverAddressBytes = ByteString.copyFrom(
-                    Objects.requireNonNull(WalletApi.decodeFromBase58Check(receiverAddress)));
+                    Objects.requireNonNull(TronVegasApi.decodeFromBase58Check(receiverAddress)));
             builder.setReceiverAddress(receiverAddressBytes);
         }
         return builder.build();
@@ -1147,10 +1153,10 @@ public class TronVegasApi {
             throws CipherException, IOException, CancelException {
         Contract.UnfreezeBalanceContract contract = createUnfreezeBalanceContract(resourceCode, receiverAddress);
         if (rpcVersion == 2) {
-            TransactionExtention transactionExtention = rpcCli.createTransaction2(contract);
+            TransactionExtention transactionExtention = TronVegasGrpcClientPool.getInstance().borrow().createTransaction2(contract);
             return processTransactionExtention(transactionExtention);
         } else {
-            Transaction transaction = rpcCli.createTransaction(contract);
+            Transaction transaction = TronVegasGrpcClientPool.getInstance().borrow().createTransaction(contract);
             return processTransaction(transaction);
         }
     }
@@ -1164,7 +1170,7 @@ public class TronVegasApi {
 
         if (receiverAddress != null && !receiverAddress.equals("")) {
             ByteString receiverAddressBytes = ByteString.copyFrom(
-                    Objects.requireNonNull(WalletApi.decodeFromBase58Check(receiverAddress)));
+                    Objects.requireNonNull(TronVegasApi.decodeFromBase58Check(receiverAddress)));
             builder.setReceiverAddress(receiverAddressBytes);
         }
 
@@ -1174,10 +1180,10 @@ public class TronVegasApi {
     public static boolean unfreezeAsset() throws CipherException, IOException, CancelException {
         Contract.UnfreezeAssetContract contract = createUnfreezeAssetContract();
         if (rpcVersion == 2) {
-            TransactionExtention transactionExtention = rpcCli.createTransaction2(contract);
+            TransactionExtention transactionExtention = TronVegasGrpcClientPool.getInstance().borrow().createTransaction2(contract);
             return processTransactionExtention(transactionExtention);
         } else {
-            Transaction transaction = rpcCli.createTransaction(contract);
+            Transaction transaction = TronVegasGrpcClientPool.getInstance().borrow().createTransaction(contract);
             return processTransaction(transaction);
         }
     }
@@ -1194,10 +1200,10 @@ public class TronVegasApi {
     public static boolean withdrawBalance() throws CipherException, IOException, CancelException {
         Contract.WithdrawBalanceContract contract = createWithdrawBalanceContract();
         if (rpcVersion == 2) {
-            TransactionExtention transactionExtention = rpcCli.createTransaction2(contract);
+            TransactionExtention transactionExtention = TronVegasGrpcClientPool.getInstance().borrow().createTransaction2(contract);
             return processTransactionExtention(transactionExtention);
         } else {
-            Transaction transaction = rpcCli.createTransaction(contract);
+            Transaction transaction = TronVegasGrpcClientPool.getInstance().borrow().createTransaction(contract);
             return processTransaction(transaction);
         }
     }
@@ -1216,7 +1222,7 @@ public class TronVegasApi {
             throws CipherException, IOException, CancelException {
         byte[] owner = getAddress();
         Contract.ProposalCreateContract contract = createProposalCreateContract(owner, parametersMap);
-        TransactionExtention transactionExtention = rpcCli.proposalCreate(contract);
+        TransactionExtention transactionExtention = TronVegasGrpcClientPool.getInstance().borrow().proposalCreate(contract);
         return processTransactionExtention(transactionExtention);
     }
 
@@ -1225,7 +1231,7 @@ public class TronVegasApi {
         byte[] owner = getAddress();
         Contract.ProposalApproveContract contract = createProposalApproveContract(owner, id,
                 is_add_approval);
-        TransactionExtention transactionExtention = rpcCli.proposalApprove(contract);
+        TransactionExtention transactionExtention = TronVegasGrpcClientPool.getInstance().borrow().proposalApprove(contract);
         return processTransactionExtention(transactionExtention);
     }
 
@@ -1233,7 +1239,7 @@ public class TronVegasApi {
             throws CipherException, IOException, CancelException {
         byte[] owner = getAddress();
         Contract.ProposalDeleteContract contract = createProposalDeleteContract(owner, id);
-        TransactionExtention transactionExtention = rpcCli.proposalDelete(contract);
+        TransactionExtention transactionExtention = TronVegasGrpcClientPool.getInstance().borrow().proposalDelete(contract);
         return processTransactionExtention(transactionExtention);
     }
 
@@ -1243,7 +1249,7 @@ public class TronVegasApi {
         byte[] owner = getAddress();
         Contract.ExchangeCreateContract contract = createExchangeCreateContract(owner, firstTokenId,
                 firstTokenBalance, secondTokenId, secondTokenBalance);
-        TransactionExtention transactionExtention = rpcCli.exchangeCreate(contract);
+        TransactionExtention transactionExtention = TronVegasGrpcClientPool.getInstance().borrow().exchangeCreate(contract);
         return processTransactionExtention(transactionExtention);
     }
 
@@ -1252,7 +1258,7 @@ public class TronVegasApi {
         byte[] owner = getAddress();
         Contract.ExchangeInjectContract contract = createExchangeInjectContract(owner, exchangeId,
                 tokenId, quant);
-        TransactionExtention transactionExtention = rpcCli.exchangeInject(contract);
+        TransactionExtention transactionExtention = TronVegasGrpcClientPool.getInstance().borrow().exchangeInject(contract);
         return processTransactionExtention(transactionExtention);
     }
 
@@ -1261,7 +1267,7 @@ public class TronVegasApi {
         byte[] owner = getAddress();
         Contract.ExchangeWithdrawContract contract = createExchangeWithdrawContract(owner, exchangeId,
                 tokenId, quant);
-        TransactionExtention transactionExtention = rpcCli.exchangeWithdraw(contract);
+        TransactionExtention transactionExtention = TronVegasGrpcClientPool.getInstance().borrow().exchangeWithdraw(contract);
         return processTransactionExtention(transactionExtention);
     }
 
@@ -1270,7 +1276,7 @@ public class TronVegasApi {
         byte[] owner = getAddress();
         Contract.ExchangeTransactionContract contract = createExchangeTransactionContract(owner,
                 exchangeId, tokenId, quant, expected);
-        TransactionExtention transactionExtention = rpcCli.exchangeTransaction(contract);
+        TransactionExtention transactionExtention = TronVegasGrpcClientPool.getInstance().borrow().exchangeTransaction(contract);
         return processTransactionExtention(transactionExtention);
     }
 
@@ -1298,7 +1304,7 @@ public class TronVegasApi {
         UpdateSettingContract updateSettingContract = createUpdateSettingContract(owner,
                 contractAddress, consumeUserResourcePercent);
 
-        TransactionExtention transactionExtention = rpcCli.updateSetting(updateSettingContract);
+        TransactionExtention transactionExtention = TronVegasGrpcClientPool.getInstance().borrow().updateSetting(updateSettingContract);
         if (transactionExtention == null || !transactionExtention.getResult().getResult()) {
             logger.debug("RPC create trx failed!");
             if (transactionExtention != null) {
@@ -1320,7 +1326,7 @@ public class TronVegasApi {
                 owner,
                 contractAddress, originEnergyLimit);
 
-        TransactionExtention transactionExtention = rpcCli
+        TransactionExtention transactionExtention = TronVegasGrpcClientPool.getInstance().borrow()
                 .updateEnergyLimit(updateEnergyLimitContract);
         if (transactionExtention == null || !transactionExtention.getResult().getResult()) {
             logger.debug("RPC create trx failed!");
@@ -1343,7 +1349,7 @@ public class TronVegasApi {
         CreateSmartContract contractDeployContract = createContractDeployContract(contractName, owner,
                 ABI, code, value, consumeUserResourcePercent, originEnergyLimit, tokenValue, tokenId, libraryAddressPair);
 
-        TransactionExtention transactionExtention = rpcCli.deployContract(contractDeployContract);
+        TransactionExtention transactionExtention = TronVegasGrpcClientPool.getInstance().borrow().deployContract(contractDeployContract);
         if (transactionExtention == null || !transactionExtention.getResult().getResult()) {
             logger.debug("RPC create trx failed!");
             if (transactionExtention != null) {
@@ -1375,7 +1381,7 @@ public class TronVegasApi {
 
         byte[] contractAddress = generateContractAddress(transactionExtention.getTransaction());
         logger.debug(
-                "Your smart contract address will be: " + WalletApi.encode58Check(contractAddress));
+                "Your smart contract address will be: " + TronVegasApi.encode58Check(contractAddress));
         return processTransactionExtention(transactionExtention);
 
     }
@@ -1385,7 +1391,7 @@ public class TronVegasApi {
         byte[] owner = ecKey.getAddress();
         Contract.TriggerSmartContract triggerContract = triggerCallContract(owner, contractAddress,
                 callValue, data, tokenValue, tokenId);
-        TransactionExtention transactionExtention = rpcCli.triggerContract(triggerContract);
+        TransactionExtention transactionExtention = TronVegasGrpcClientPool.getInstance().borrow().triggerContract(triggerContract);
         if (transactionExtention == null || !transactionExtention.getResult().getResult()) {
             logger.debug("RPC create call trx failed!");
             logger.debug("Code = " + transactionExtention.getResult().getCode());

@@ -28,7 +28,7 @@ public class TriggerCallContractDemo {
     public static AtomicInteger successCount = new AtomicInteger(0);
     public static AtomicInteger count = new AtomicInteger(0);
 
-    public static final int TOTAL_COUNT = 1000;
+    public static final int TOTAL_COUNT = 10000;
 
     public static void main(String[] args) throws Exception {
         final String privateKey = "3B79F0B570C0669617DB9B627027DCAD46758834B47691FEDA62A4C0FB85E586";
