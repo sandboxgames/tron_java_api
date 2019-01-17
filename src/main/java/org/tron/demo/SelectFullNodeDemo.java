@@ -41,7 +41,7 @@ public class SelectFullNodeDemo {
 
         while (true){
 //            if(isFinished){
-                GrpcAPI.BlockExtention block = TronVegasApi.getNowBlock();
+                GrpcAPI.BlockExtention block = TronVegasApi.getBlock2Safe(-1);
                 if(block != null){
                     logger.info("Block:" + block.getBlockHeader().getRawData().getNumber());
                 }

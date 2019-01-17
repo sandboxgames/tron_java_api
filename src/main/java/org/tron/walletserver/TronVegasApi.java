@@ -194,7 +194,7 @@ public class TronVegasApi {
         return TronVegasGrpcClientPool.getInstance().borrow().generateAddress(builder.build());
     }
 
-    public static BlockExtention getNowBlock(){
+    public static BlockExtention getBlock2Safe(long blockNum){
         BlockExtention block = null;
 
         TronVegasNodeInfo node = TronVegasGrpcClientPool.getInstance().get(UUID.randomUUID().toString());
@@ -207,7 +207,7 @@ public class TronVegasApi {
         }
 
         try{
-            block = client.getBlock2(-1);
+            block = client.getBlock2(blockNum);
 //            if(node != null && node.getClient() != null){
 //                logger.info("From " + node.getHost());
 //            }
