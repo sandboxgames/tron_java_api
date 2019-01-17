@@ -134,7 +134,6 @@ public class TronVegasGrpcClientPool {
                 }
                 fullNodeSet.removeAll(tempSet);
                 tempSet.clear();
-                logger.info("-------------------------------------------------------");
 
                 long maxBlockNum = 0;
                 for (TronVegasNodeInfo entry : fullNodeSet) {
