@@ -24,7 +24,7 @@ public class TronVegasGrpcClientPool {
     private static final int MAX_NODE_LIMIT = 5;//保留节点数量
 
 
-    public static TronVegasGrpcClientPool instance = new TronVegasGrpcClientPool();
+    public static final TronVegasGrpcClientPool INSTANCE = new TronVegasGrpcClientPool();
     private SortedMap<Long, TronVegasNodeInfo> circle;
     private GrpcClient defaultClient;
     private String defaultFullNode = "";
@@ -32,7 +32,7 @@ public class TronVegasGrpcClientPool {
     private ScheduledExecutorService scheduledExecutorService;
 
     public static TronVegasGrpcClientPool getInstance() {
-        return instance;
+        return INSTANCE;
     }
 
     /*
