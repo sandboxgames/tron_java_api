@@ -24,8 +24,7 @@ public class TronVegasGrpcClientPool {
     private static final int MAX_NODE_LIMIT = 3;//保留节点数量
     private static final int MIN_NODE_LIMIT = 0;//最少节点数量
 
-//    private static final long FREQUENCY_QUERY_LIMIT_TIME = 60000 * 5;//查询节点频率限制(ms)
-    private static final long FREQUENCY_QUERY_LIMIT_TIME = 30000;//查询节点频率限制(ms)
+    private static final long FREQUENCY_QUERY_LIMIT_TIME = 60000 * 3;//查询节点频率限制(ms)
 
 
     public static TronVegasGrpcClientPool instance = new TronVegasGrpcClientPool();
