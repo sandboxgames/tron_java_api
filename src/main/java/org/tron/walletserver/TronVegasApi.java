@@ -1,20 +1,23 @@
 package org.tron.walletserver;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.typesafe.config.Config;
-import com.typesafe.config.ConfigObject;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -45,16 +48,10 @@ import org.tron.common.crypto.Sha256Hash;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.TransactionUtils;
-import org.tron.common.utils.Utils;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.Parameter.CommonConstant;
 import org.tron.core.exception.CancelException;
 import org.tron.core.exception.CipherException;
-import org.tron.keystore.CheckStrength;
-import org.tron.keystore.Credentials;
-import org.tron.keystore.Wallet;
-import org.tron.keystore.WalletFile;
-import org.tron.keystore.WalletUtils;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.BuyStorageBytesContract;
@@ -1408,6 +1405,56 @@ public class TronVegasApi {
                 "Your smart contract address will be: " + TronVegasApi.encode58Check(contractAddress));
         return processTransactionExtention(transactionExtention);
 
+    }
+
+    public static String triggerContractForTxid(byte[] contractAddress, long callValue, byte[] data, long feeLimit, long tokenValue, String tokenId)
+        throws IOException, CipherException, CancelException {
+        byte[] owner = ecKey.getAddress();
+        Contract.TriggerSmartContract triggerContract = triggerCallContract(owner, contractAddress,
+            callValue, data, tokenValue, tokenId);
+        TransactionExtention transactionExtention = TronVegasGrpcClientPool.getInstance().borrow().triggerContract(triggerContract);
+        if (transactionExtention == null || !transactionExtention.getResult().getResult()) {
+            logger.debug("RPC create call trx failed!");
+            logger.debug("Code = " + transactionExtention.getResult().getCode());
+            logger.debug("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
+            return null;
+        }
+
+        Transaction transaction = transactionExtention.getTransaction();
+        if (transaction.getRetCount() != 0 &&
+            transactionExtention.getConstantResult(0) != null &&
+            transactionExtention.getResult() != null) {
+            byte[] result = transactionExtention.getConstantResult(0).toByteArray();
+            logger.debug("message:" + transaction.getRet(0).getRet());
+            logger.debug(":" + ByteArray
+                .toStr(transactionExtention.getResult().getMessage().toByteArray()));
+            logger.debug("Result:" + Hex.toHexString(result));
+            return ByteArray.toHexString(transactionExtention.getTxid().toByteArray());
+        }
+
+        TransactionExtention.Builder texBuilder = TransactionExtention.newBuilder();
+        Transaction.Builder transBuilder = Transaction.newBuilder();
+        Transaction.raw.Builder rawBuilder = transactionExtention.getTransaction().getRawData()
+            .toBuilder();
+        rawBuilder.setFeeLimit(feeLimit);
+        transBuilder.setRawData(rawBuilder);
+        for (int i = 0; i < transactionExtention.getTransaction().getSignatureCount(); i++) {
+            ByteString s = transactionExtention.getTransaction().getSignature(i);
+            transBuilder.setSignature(i, s);
+        }
+        for (int i = 0; i < transactionExtention.getTransaction().getRetCount(); i++) {
+            Result r = transactionExtention.getTransaction().getRet(i);
+            transBuilder.setRet(i, r);
+        }
+        texBuilder.setTransaction(transBuilder);
+        texBuilder.setResult(transactionExtention.getResult());
+        texBuilder.setTxid(transactionExtention.getTxid());
+        transactionExtention = texBuilder.build();
+
+        if (processTransactionExtention(transactionExtention)) {
+            return ByteArray.toHexString(transactionExtention.getTxid().toByteArray());
+        }
+        return null;
     }
 
     public static boolean triggerContract(byte[] contractAddress, long callValue, byte[] data, long feeLimit, long tokenValue, String tokenId)
