@@ -957,6 +957,27 @@ public class TronVegasApi {
         }
     }
 
+    public static String sendCoinForTxid(byte[] to, long amount)
+        throws CipherException, IOException, CancelException {
+        byte[] owner = getAddress();
+        Contract.TransferContract contract = createTransferContract(to, owner, amount);
+        if (rpcVersion == 2) {
+            TransactionExtention transactionExtention = TronVegasGrpcClientPool.getInstance().borrow().createTransaction2(contract);
+            boolean ret = processTransactionExtention(transactionExtention);
+            if (ret) {
+                return ByteArray.toHexString(transactionExtention.getTxid().toByteArray());
+            }
+            return null;
+        } else {
+            Transaction transaction = TronVegasGrpcClientPool.getInstance().borrow().createTransaction(contract);
+            boolean ret = processTransaction(transaction);
+            if (ret) {
+                return ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().getData().toByteArray()));
+            }
+            return null;
+        }
+    }
+
     public static boolean updateAccount(byte[] accountNameBytes)
             throws CipherException, IOException, CancelException {
         byte[] owner = getAddress();
