@@ -1428,7 +1428,7 @@ public class TronVegasApi {
 
     }
 
-    public static String triggerContractForTxid(byte[] contractAddress, long callValue, byte[] data, long feeLimit, long tokenValue, String tokenId)
+    public static TransactionExtention triggerContractForTxid(byte[] contractAddress, long callValue, byte[] data, long feeLimit, long tokenValue, String tokenId)
         throws IOException, CipherException, CancelException {
         byte[] owner = ecKey.getAddress();
         Contract.TriggerSmartContract triggerContract = triggerCallContract(owner, contractAddress,
@@ -1450,7 +1450,7 @@ public class TronVegasApi {
             logger.debug(":" + ByteArray
                 .toStr(transactionExtention.getResult().getMessage().toByteArray()));
             logger.debug("Result:" + Hex.toHexString(result));
-            return ByteArray.toHexString(transactionExtention.getTxid().toByteArray());
+            return transactionExtention;
         }
 
         TransactionExtention.Builder texBuilder = TransactionExtention.newBuilder();
@@ -1473,7 +1473,7 @@ public class TronVegasApi {
         transactionExtention = texBuilder.build();
 
         if (processTransactionExtention(transactionExtention)) {
-            return ByteArray.toHexString(transactionExtention.getTxid().toByteArray());
+            return transactionExtention;
         }
         return null;
     }
