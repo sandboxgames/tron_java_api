@@ -972,7 +972,7 @@ public class TronVegasApi {
             Transaction transaction = TronVegasGrpcClientPool.getInstance().borrow().createTransaction(contract);
             boolean ret = processTransaction(transaction);
             if (ret) {
-                return ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().getData().toByteArray()));
+                return ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
             }
             return null;
         }
