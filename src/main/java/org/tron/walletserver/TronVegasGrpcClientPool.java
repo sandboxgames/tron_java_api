@@ -3,6 +3,7 @@ package org.tron.walletserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.api.GrpcAPI;
+import org.tron.protos.Protocol;
 
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -12,13 +13,15 @@ import java.util.concurrent.*;
 public class TronVegasGrpcClientPool {
     private static final Logger logger = LoggerFactory.getLogger("TronVegasGrpcClientPool");
 
+    private static final int MAX_NODE_HOST_CACHE_SIZE = 1000;//节点信息缓存总数
+
     private static final int QUERY_NODE_THREAD_NUMBER = 100;//查找节点线程总数
-    private static final int CONNECTING_TIMEOUT = 2000;//测试连接超时时间(ms)
+    private static final int CONNECTING_TIMEOUT = 3000;//测试连接超时时间(ms)
     private static final int DEFAULT_GRPC_PORT = 50051;//GRPC默认端口
 
-    private static final long QUERY_LIMIT_TIME = 60000;//查询节点总时间(ms)
+    private static final long QUERY_LIMIT_TIME = 20000;//查询节点总时间(ms)
 
-    private static final long MAX_QUERY_TIME = 2000;//请求节点最大响应时间限制(ms)
+    private static final long MAX_QUERY_TIME = 3000;//请求节点最大响应时间限制(ms)
     private static final int MAX_ERROR_BLOCK_NUM = 2;//请求节点块最大误差范围
 
     private static final int MAX_NODE_LIMIT = 3;//保留节点数量
@@ -31,6 +34,9 @@ public class TronVegasGrpcClientPool {
 
     private SortedMap<Long, TronVegasNodeInfo> circle;
     private ConcurrentSkipListSet<TronVegasNodeInfo> circleSource;
+
+    private ConcurrentSkipListSet<TronVegasNodeHost> nodeHostCacheSet = new ConcurrentSkipListSet<>();
+
 
     private GrpcClient defaultClient;
     private String defaultFullNode = "";
@@ -99,37 +105,39 @@ public class TronVegasGrpcClientPool {
                 scheduledExecutorService = Executors.newScheduledThreadPool(1);
             }
 
-            Optional<GrpcAPI.NodeList> opNodeList = TronVegasApi.listNodes();
-
-            if (opNodeList == null || !opNodeList.isPresent()) {
-                return;
+            try{
+                Optional<GrpcAPI.NodeList> opNodeList = TronVegasApi.listNodesByDefault();
+                GrpcAPI.NodeList nodeList = opNodeList.get();
+                if (nodeList.getNodesCount() > 0) {
+                    for (int index = 0; index < nodeList.getNodesCount(); index++) {
+                        GrpcAPI.Node node = nodeList.getNodes(index);
+                        TronVegasNodeHost nodeHost = new TronVegasNodeHost();
+                        nodeHost.init(node.getAddress().getHost().toStringUtf8(), DEFAULT_GRPC_PORT);
+                        addNodeHost(nodeHost);
+                    }
+                }
+            }catch (Exception ex){
+                logger.error("TronVegasApi.listNodes ERROR", ex);
             }
 
-            GrpcAPI.NodeList nodeList = opNodeList.get();
-            if (nodeList.getNodesCount() <= 0) {
-                logger.info("No nodes is found");
+            if(nodeHostCacheSet.size() <= 0){
                 return;
             }
 
             final ExecutorService fixedThreadPool = Executors.newFixedThreadPool(QUERY_NODE_THREAD_NUMBER);
             final ConcurrentSkipListSet<TronVegasNodeInfo> fullNodeSet = new ConcurrentSkipListSet<>();
 
-            for (int index = 0; index < nodeList.getNodesCount(); index++) {
-                final int i = index;
+            for(TronVegasNodeHost nodeHost : nodeHostCacheSet)
                 fixedThreadPool.execute(() -> {
                     try {
-                        GrpcAPI.Node node = nodeList.getNodes(i);
-                        String ip = node.getAddress().getHost().toStringUtf8();
-
-                        if (TronVegasGrpcClientPool.crunchifyAddressReachable(node.getAddress().getHost().toStringUtf8(), DEFAULT_GRPC_PORT, CONNECTING_TIMEOUT) <= MAX_QUERY_TIME) {
+                        if (TronVegasGrpcClientPool.crunchifyAddressReachable(nodeHost.getIp(), nodeHost.getPort(), CONNECTING_TIMEOUT) <= MAX_QUERY_TIME) {
                             try {
-                                String host = ip + ":" + DEFAULT_GRPC_PORT;
                                 long time = System.currentTimeMillis();
-                                GrpcClient client = new GrpcClient(host, "");
+                                GrpcClient client = new GrpcClient(nodeHost.getHost(), "");
                                 GrpcAPI.BlockExtention block = client.getBlock2(-1);
                                 long blockNum = block.getBlockHeader().getRawData().getNumber();
                                 TronVegasNodeInfo tNode = new TronVegasNodeInfo();
-                                tNode.setHost(host);
+                                tNode.setHost(nodeHost.getHost());
                                 tNode.setBlockNum(blockNum);
                                 tNode.setResponseTime(System.currentTimeMillis() - time);
                                 tNode.setClient(client);
@@ -139,13 +147,12 @@ public class TronVegasGrpcClientPool {
                                 logger.debug(ex.getMessage());
                             }
                         } else {
-                            logger.debug(ip + " can't be connected");
+                            logger.debug(nodeHost.getIp() + " can't be connected");
                         }
                     } catch (Exception ex) {
                         logger.debug(ex.getMessage());
                     }
                 });
-            }
 
             scheduledExecutorService.schedule(() -> {
                 try {
@@ -159,7 +166,7 @@ public class TronVegasGrpcClientPool {
                             tempSet.add(entry);
                             safeReleaseNode(entry);
                         }
-//                    logger.info("Host: " + entry.getHost() + " RTime:" + entry.getResponseTime() + " BlockNum:" + entry.getBlockNum());
+                        logger.debug("Host: " + entry.getHost() + " RTime:" + entry.getResponseTime() + " BlockNum:" + entry.getBlockNum());
                     }
                     fullNodeSet.removeAll(tempSet);
                     tempSet.clear();
@@ -190,6 +197,11 @@ public class TronVegasGrpcClientPool {
                     fullNodeSet.removeAll(tempSet);
                     tempSet.clear();
 
+                    logger.debug("FINAL FASTEST NODE LISTS");
+                    for (TronVegasNodeInfo entry : fullNodeSet) {
+                        logger.debug("Host: " + entry.getHost() + " RTime:" + entry.getResponseTime() + " BlockNum:" + entry.getBlockNum());
+                    }
+
                     initNodes(fullNodeSet);
                     if (queryNodeCallback != null) {
                         queryNodeCallback.finish(fullNodeSet);
@@ -203,13 +215,20 @@ public class TronVegasGrpcClientPool {
         }
     }
 
+    private void addNodeHost(TronVegasNodeHost nodeHost){
+        nodeHostCacheSet.add(nodeHost);
+        if(nodeHostCacheSet.size() > MAX_NODE_HOST_CACHE_SIZE){
+            nodeHostCacheSet.pollFirst();
+        }
+    }
+
     private void safeReleaseNode(TronVegasNodeInfo nodeInfo) {
         if (nodeInfo == null || nodeInfo.getClient() == null) {
             return;
         }
 
         try {
-            nodeInfo.getClient().shutdownNow();
+            nodeInfo.getClient().shutdown();
         } catch (Exception ex) {
             logger.info("SafeReleaseNode ERROR", ex);
         }
@@ -255,6 +274,10 @@ public class TronVegasGrpcClientPool {
         if (proxy != null && proxy.getClient() != null) {
             return proxy.getClient();
         }
+        return defaultClient;
+    }
+
+    public GrpcClient getDefaultClient(){
         return defaultClient;
     }
 

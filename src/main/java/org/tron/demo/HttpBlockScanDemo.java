@@ -3,21 +3,20 @@ package org.tron.demo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.api.GrpcAPI;
-import org.tron.protos.Protocol;
 import org.tron.walletserver.TronVegasApi;
 import org.tron.walletserver.TronVegasGrpcClientPool;
 import org.tron.walletserver.TronVegasNodeInfo;
 
+public class HttpBlockScanDemo {
 
-public class SelectFullNodeDemo {
-
-    private static final Logger logger = LoggerFactory.getLogger("SelectFullNodeDemo");
+    private static final Logger logger = LoggerFactory.getLogger("HttpBlockScanDemo");
 
     private static boolean isFinished = false;
 
-    public static void main(String[] args) {
+    private static boolean isLoaded = false;
 
-        TronVegasApi.isDebug = true;
+    public static void main(String[] args) throws Exception {
+
         TronVegasApi.initWithPrivateKey("");
 
         TronVegasGrpcClientPool.getInstance().queryFastestNodes(fullNodes -> {
@@ -27,22 +26,21 @@ public class SelectFullNodeDemo {
                     logger.info("Host: " + entry.getHost() + " RTime:" + entry.getResponseTime() + " BlockNum:" + entry.getBlockNum());
                 }
             }
+            isLoaded = true;
         }, true);
 
-        long time = 0;
 
         while (!isFinished){
 
-            if(time >= 60000){
-                time = 0;
-                TronVegasGrpcClientPool.getInstance().queryFastestNodes(null, true);
+            if(!isLoaded){
+                continue;
             }
 
             try {
                 GrpcAPI.BlockExtention block = TronVegasApi.getBlock2Safe(-1);
                 if(block != null){
                     if(block.hasBlockHeader()){
-                        logger.info("Block:" + block.getBlockHeader().getRawData().getNumber());
+                        logger.info("Block:" + block.toString());
                     }else{
                         logger.info("Block: NULL");
                     }
@@ -50,18 +48,10 @@ public class SelectFullNodeDemo {
                     logger.info("Block: NULL");
                 }
             }catch (Exception ex){
-                logger.info("GetBlock2Safe ERROR: " + ex.getMessage());
+                logger.error("GetBlock2Safe ERROR", ex);
             }
-
-            try {
-                Thread.sleep(1000);
-            }catch (InterruptedException e){
-
-            }
-
-            time += 1000;
+            Thread.sleep(500);
         }
-
 
         TronVegasGrpcClientPool.getInstance().shutdown();
     }

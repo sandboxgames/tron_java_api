@@ -89,6 +89,8 @@ public class TronVegasApi {
 
     private static ECKey ecKey = null;
 
+    public static boolean isDebug = false;
+
     public static void initWithPrivateKey(String privateKey) {
         ecKey = ECKey.fromPrivate(ByteArray.fromHexString(privateKey));
         init();
@@ -208,11 +210,13 @@ public class TronVegasApi {
 
         try{
             block = client.getBlock2(blockNum);
-//            if(node != null && node.getClient() != null){
-//                logger.info("From " + node.getHost());
-//            }
+            if(isDebug){
+                if(node != null && node.getClient() != null){
+                    logger.debug("From " + node.getHost());
+                }
+            }
         }catch (Exception ex){
-//            logger.info("getNowBlock ERROR", ex);
+            logger.error("getBlock2Safe ERROR", ex);
             if(node != null && node.incErrorCount() > TronVegasNodeInfo.DEFAULT_NODE_MAX_ERROR_COUNT){
                 TronVegasGrpcClientPool.getInstance().remove(node);
             }
@@ -476,6 +480,10 @@ public class TronVegasApi {
 
     public static Optional<NodeList> listNodes() {
         return TronVegasGrpcClientPool.getInstance().borrow().listNodes();
+    }
+
+    public static Optional<NodeList> listNodesByDefault() {
+        return TronVegasGrpcClientPool.getInstance().getDefaultClient().listNodes();
     }
 
     public static Optional<AssetIssueList> getAssetIssueByAccount(byte[] address) {
