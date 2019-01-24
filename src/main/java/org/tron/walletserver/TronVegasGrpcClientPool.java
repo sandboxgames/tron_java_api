@@ -1,14 +1,24 @@
 package org.tron.walletserver;
 
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.api.GrpcAPI;
 import org.tron.protos.Protocol;
-
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.util.*;
-import java.util.concurrent.*;
 
 public class TronVegasGrpcClientPool {
     private static final Logger logger = LoggerFactory.getLogger("TronVegasGrpcClientPool");
@@ -30,10 +40,10 @@ public class TronVegasGrpcClientPool {
     private static final long FREQUENCY_QUERY_LIMIT_TIME = 60000 * 3;//查询节点频率限制(ms)
 
 
-    public static TronVegasGrpcClientPool instance = new TronVegasGrpcClientPool();
+    public static final TronVegasGrpcClientPool INSTANCE = new TronVegasGrpcClientPool();
 
-    private SortedMap<Long, TronVegasNodeInfo> circle;
-    private ConcurrentSkipListSet<TronVegasNodeInfo> circleSource;
+    private volatile SortedMap<Long, TronVegasNodeInfo> circle;
+    private volatile ConcurrentSkipListSet<TronVegasNodeInfo> circleSource;
 
     private ConcurrentSkipListSet<TronVegasNodeHost> nodeHostCacheSet = new ConcurrentSkipListSet<>();
 
@@ -49,7 +59,7 @@ public class TronVegasGrpcClientPool {
     private final Object lock = new Object();
 
     public static TronVegasGrpcClientPool getInstance() {
-        return instance;
+        return INSTANCE;
     }
 
     /*
