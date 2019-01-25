@@ -2,13 +2,7 @@ package org.tron.walletserver;
 
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -85,13 +79,25 @@ public class TronVegasGrpcClientPool {
         }
     }
 
-    public void init(String fullNode, String solidityNode, int maxNodeLimit) {
+    public void init(String fullNode, String solidityNode, int maxNodeLimit, List<String> seedNodeList) {
         this.defaultFullNode = fullNode;
         this.defaultSolidityNode = solidityNode;
         if(maxNodeLimit > 0){
             this.maxNodeLimit = maxNodeLimit;
         }
         this.defaultClient = new GrpcClient(this.defaultFullNode, this.defaultSolidityNode);
+        if(seedNodeList != null && seedNodeList.size() > 0){
+            try {
+                for(String host : seedNodeList){
+                    String[] ip = host.split(":");
+                    TronVegasNodeHost nodeHost = new TronVegasNodeHost();
+                    nodeHost.init(ip[0], Integer.valueOf(ip[1]));
+                    addNodeHost(nodeHost);
+                }
+            }catch (Exception ex){
+                logger.error("Add Seed Node ERROR:", ex);
+            }
+        }
     }
 
     public void queryFastestNodes(QueryNodeCallback queryNodeCallback, boolean forceQuery) {

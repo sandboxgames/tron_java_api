@@ -118,7 +118,11 @@ public class TronVegasApi {
             maxNodeLimit = config.getInt("MAX_NODE_LIMIT");
         }
 
-        TronVegasGrpcClientPool.getInstance().init(fullNode, solidityNode, maxNodeLimit);
+        List<String> seedNodeList = null;
+        if(config.hasPath("seed.node.ip.list")){
+            seedNodeList = config.getStringList("seed.node.ip.list");
+        }
+        TronVegasGrpcClientPool.getInstance().init(fullNode, solidityNode, maxNodeLimit, seedNodeList);
     }
 
     public static void queryFastestNodes(){
