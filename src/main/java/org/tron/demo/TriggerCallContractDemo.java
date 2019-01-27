@@ -2,6 +2,7 @@ package org.tron.demo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.api.GrpcAPI;
 import org.tron.common.utils.AbiUtil;
 import org.tron.common.utils.ByteArray;
 import org.tron.walletserver.TronVegasApi;
@@ -28,13 +29,12 @@ public class TriggerCallContractDemo {
     public static AtomicInteger successCount = new AtomicInteger(0);
     public static AtomicInteger count = new AtomicInteger(0);
 
-    public static final int TOTAL_COUNT = 10000;
+    public static final int TOTAL_COUNT = 1;
 
     public static void main(String[] args) throws Exception {
         final String privateKey = "3B79F0B570C0669617DB9B627027DCAD46758834B47691FEDA62A4C0FB85E586";
         final String toAddress = "TSZcWmjrgfNpEjWC8yVVqTwHcjBttp16di";
-        final String contractAddress = "41fab4a0696766af4b9f989fabf0505b306109406c";
-
+        final String contractAddress = "41FAB4A0696766AF4B9F989FABF0505B306109406C";
 
         TronVegasApi.initWithPrivateKey(privateKey);
 
@@ -52,7 +52,7 @@ public class TriggerCallContractDemo {
                                     new Address(Numeric.toHexString(TronVegasApi.decodeFromBase58Check(toAddress))),
                                     new Uint256(BigInteger.valueOf(amount))),
                             Collections.<TypeReference<?>>emptyList());
-                    boolean result = TronVegasApi.triggerContract(
+                    GrpcAPI.TransactionExtention transactionExtention = TronVegasApi.triggerContractForTxid(
                             ByteArray.fromHexString(contractAddress),
                             0L,
                                     Numeric.hexStringToByteArray(FunctionEncoder.encode(function)),
@@ -60,7 +60,7 @@ public class TriggerCallContractDemo {
                             0,
                             null
                     );
-                    if (result) {
+                    if (transactionExtention.getResult().getResult()) {
                         successCount.incrementAndGet();
                     }
                     System.out.println("Process Time: " + (System.currentTimeMillis() - time));
