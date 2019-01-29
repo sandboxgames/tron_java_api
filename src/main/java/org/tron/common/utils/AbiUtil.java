@@ -5,12 +5,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.spongycastle.util.encoders.EncoderException;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
 import org.tron.core.exception.EncodingException;
 import org.tron.walletserver.WalletApi;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class AbiUtil {
 
@@ -130,11 +130,17 @@ public class AbiUtil {
 
     @Override
     byte[] encode(String value) {
-      long n = Long.valueOf(value);
-      DataWord word = new DataWord(Math.abs(n));
-      if (n < 0) {
-        word.negate();
+      DataWord word;
+      try {
+        long n = Long.valueOf(value);
+        word = new DataWord(Math.abs(n));
+        if (n < 0) {
+          word.negate();
+        }
+      } catch (NumberFormatException e) {
+        word = new DataWord(ByteArray.fromHexString(value));
       }
+
       return word.getData();
     }
 
