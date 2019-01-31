@@ -43,6 +43,7 @@ import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.utils.ByteArray;
 import org.tron.protos.Contract;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.ChainParameters;
@@ -102,6 +103,10 @@ public class GrpcClient {
     if (channelSolidity != null) {
       channelSolidity.shutdownNow();
     }
+  }
+
+  public Protocol.NodeInfo getNodeInfo() {
+    return blockingStubFull.getNodeInfo(EmptyMessage.newBuilder().build());
   }
 
   public Account queryAccount(byte[] address) {

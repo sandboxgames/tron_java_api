@@ -150,6 +150,15 @@ public class TronVegasGrpcClientPool {
                             try {
                                 long time = System.currentTimeMillis();
                                 GrpcClient client = new GrpcClient(nodeHost.getHost(), "");
+
+                                if(TronVegasApi.isSupportConstant){
+                                    Protocol.NodeInfo nodeInfo = client.getNodeInfo();
+                                    if(!nodeInfo.getConfigNodeInfo().getSupportConstant()){
+                                        logger.debug(nodeHost.getHost() + " doesn't support constant");
+                                        return;
+                                    }
+                                }
+
                                 GrpcAPI.BlockExtention block = client.getBlock2(-1);
                                 long blockNum = block.getBlockHeader().getRawData().getNumber();
                                 TronVegasNodeInfo tNode = new TronVegasNodeInfo();

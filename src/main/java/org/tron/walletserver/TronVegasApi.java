@@ -86,6 +86,7 @@ public class TronVegasApi {
 
     private static ECKey ecKey = null;
 
+    public static boolean isSupportConstant = false;
     public static boolean isDebug = false;
 
     public static void initWithPrivateKey(String privateKey) {
@@ -116,6 +117,9 @@ public class TronVegasApi {
         int maxNodeLimit = 0;
         if (config.hasPath("MAX_NODE_LIMIT")){
             maxNodeLimit = config.getInt("MAX_NODE_LIMIT");
+        }
+        if (config.hasPath("SUPPORT_CONSTANT")){
+            isSupportConstant = config.getInt("SUPPORT_CONSTANT") > 0;
         }
 
         List<String> seedNodeList = null;
