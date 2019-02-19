@@ -27,6 +27,8 @@ public class SelectFullNodeDemo {
                     logger.info("Host: " + entry.getHost() + " RTime:" + entry.getResponseTime() + " BlockNum:" + entry.getBlockNum());
                 }
             }
+
+//            TronVegasGrpcClientPool.getInstance().shutdown();
         }, true);
 
         long time = 0;
@@ -61,7 +63,7 @@ public class SelectFullNodeDemo {
 
             time += 1000;
         }
-
+//
 
         TronVegasGrpcClientPool.getInstance().shutdown();
     }

@@ -12,7 +12,7 @@ public class Address implements Type<String> {
 
     public static final String TYPE_NAME = "address";
     public static final int LENGTH = 64;
-    public static final int LENGTH_IN_HEX = LENGTH >> 2;
+    public static final int LENGTH_IN_HEX = 42;
     public static final Address DEFAULT = new Address(BigInteger.ZERO);
 
     private final Uint256 value;

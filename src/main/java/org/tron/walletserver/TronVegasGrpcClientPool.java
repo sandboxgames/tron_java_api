@@ -56,29 +56,6 @@ public class TronVegasGrpcClientPool {
         return INSTANCE;
     }
 
-    /*
-     * Overriding default InetAddress.isReachable() method to add 2 more arguments port and timeout value
-     *
-     * Address: www.google.com
-     * port: 80 or 443
-     * timeout: 2000 (in milliseconds)
-     */
-    public static long crunchifyAddressReachable(String address, int port, int timeout) {
-        try {
-
-            long time = System.currentTimeMillis();
-            try (Socket crunchifySocket = new Socket()) {
-                // Connects this socket to the server with a specified timeout value.
-                crunchifySocket.connect(new InetSocketAddress(address, port), timeout);
-            }
-            // Return true if connection successful
-            return (System.currentTimeMillis() - time);
-        } catch (Exception exception) {
-            // Return false if connection fails
-            return -1;
-        }
-    }
-
     public void init(String fullNode, String solidityNode, int maxNodeLimit, List<String> seedNodeList) {
         this.defaultFullNode = fullNode;
         this.defaultSolidityNode = solidityNode;
@@ -146,7 +123,7 @@ public class TronVegasGrpcClientPool {
             for(TronVegasNodeHost nodeHost : nodeHostCacheSet)
                 fixedThreadPool.execute(() -> {
                     try {
-                        if (TronVegasGrpcClientPool.crunchifyAddressReachable(nodeHost.getIp(), nodeHost.getPort(), CONNECTING_TIMEOUT) <= MAX_QUERY_TIME) {
+                        if (HttpUtils.crunchifyAddressReachable(nodeHost.getIp(), nodeHost.getPort(), CONNECTING_TIMEOUT) <= MAX_QUERY_TIME) {
                             try {
                                 long time = System.currentTimeMillis();
                                 GrpcClient client = new GrpcClient(nodeHost.getHost(), "");
