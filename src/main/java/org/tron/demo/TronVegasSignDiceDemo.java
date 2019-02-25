@@ -24,8 +24,9 @@ public class TronVegasSignDiceDemo {
 
         System.out.println("签名公钥：" + pubKey);
         System.out.println("源数据：" + new String(srcData));
+        System.out.println("源数据Hash：" + ByteArray.toHexString(Sha256Hash.hash(srcData)));
         System.out.println("签名数据：" + ByteArray.toHexString(signData));
-        System.out.println("开奖结果：" + ByteArray.toHexString(Sha256Hash.hash(signData)));
+        System.out.println("签名数据Hash：" + ByteArray.toHexString(Sha256Hash.hash(signData)));
 
         System.out.println(" ");
 
