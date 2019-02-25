@@ -145,6 +145,19 @@ public class TronVegasApi {
         return rpcVersion;
     }
 
+    public static byte[] signByte(byte[] data){
+        return signByteWithECKey(data, ecKey);
+    }
+
+    public static byte[] signByte(byte[] data, String privateKey){
+        ECKey key = ECKey.fromPrivate(ByteArray.fromHexString(privateKey));
+        return signByteWithECKey(data, key);
+    }
+
+    private static byte[] signByteWithECKey(byte[] data, ECKey key){
+        byte[] hash = Sha256Hash.hash(data);
+        return key.sign(hash).toByteArray();
+    }
 
     public static Account queryAccount(byte[] address) {
         return TronVegasGrpcClientPool.getInstance().borrow().queryAccount(address);//call rpc
