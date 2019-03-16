@@ -2,13 +2,7 @@ package org.tron.walletserver;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -84,6 +78,8 @@ public class TronVegasApi {
     private static byte addressPreFixByte = CommonConstant.ADD_PRE_FIX_BYTE_TESTNET;
     private static int rpcVersion = 0;
 
+    public static final String TRX_MESSAGE_HEADER = "\u0019TRON Signed Message:\n32";
+
     private static ECKey ecKey = null;
 
     public static boolean isSupportConstant = false;
@@ -145,6 +141,19 @@ public class TronVegasApi {
         return rpcVersion;
     }
 
+
+    public static boolean verifySign(String publicKey, byte data[], String signDataHex){
+        boolean result = false;
+        try{
+            byte[] messageHash = Hash.sha3(getTRONMessageHash(data));
+            byte[] address = ECKey.signatureToAddress(messageHash, TransactionUtils.getBase64FromByteString(ByteString.copyFrom(ByteArray.fromHexString(signDataHex))));
+            result = Arrays.equals(TronVegasApi.decodeFromBase58Check(publicKey), address);
+        }catch (Exception ex){
+            logger.error("verifySign", ex);
+        }
+        return result;
+    }
+
     public static byte[] signByte(byte[] data){
         return signByteWithECKey(data, ecKey);
     }
@@ -155,21 +164,18 @@ public class TronVegasApi {
     }
 
     private static byte[] signByteWithECKey(byte[] data, ECKey key){
-        byte[] hash = Sha256Hash.hash(data);
+        byte[] hash = Hash.sha3(getTRONMessageHash(data));
         return key.sign(hash).toByteArray();
     }
-    
-    public static byte[] signByte(String hash){
-        return signByteWithECKey(hash, ecKey);
-    }
 
-    public static byte[] signByte(String hash, String privateKey){
-        ECKey key = ECKey.fromPrivate(ByteArray.fromHexString(privateKey));
-        return signByteWithECKey(hash, key);
-    }
+    private static byte[] getTRONMessageHash(byte[] message) {
+        byte[] prefix = TRX_MESSAGE_HEADER.getBytes();
 
-    private static byte[] signByteWithECKey(String hash, ECKey key){
-        return key.sign(ByteArray.fromHexString(hash)).toByteArray();
+        byte[] result = new byte[prefix.length + message.length];
+        System.arraycopy(prefix, 0, result, 0, prefix.length);
+        System.arraycopy(message, 0, result, prefix.length, message.length);
+
+        return result;
     }
 
     public static Account queryAccount(byte[] address) {
