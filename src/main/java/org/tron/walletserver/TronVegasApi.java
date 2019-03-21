@@ -257,12 +257,10 @@ public class TronVegasApi {
 
         try{
             block = client.getBlock(blockNum);
-            if(isDebug){
-                if(node != null && node.getClient() != null){
-                    logger.debug("From " + node.getHost());
-                }
-            }
         }catch (Exception ex){
+            if(node != null){
+                logger.error("Error Node IP: " + node.getHost());
+            }
             logger.error("getBlock ERROR", ex);
             if(node != null && node.incErrorCount() > TronVegasNodeInfo.DEFAULT_NODE_MAX_ERROR_COUNT){
                 TronVegasGrpcClientPool.getInstance().remove(node);
@@ -285,12 +283,10 @@ public class TronVegasApi {
 
         try{
             block = client.getBlock2(blockNum);
-            if(isDebug){
-                if(node != null && node.getClient() != null){
-                    logger.debug("From " + node.getHost());
-                }
-            }
         }catch (Exception ex){
+            if(node != null){
+                logger.error("Error Node IP: " + node.getHost());
+            }
             logger.error("getBlock2Safe ERROR", ex);
             if(node != null && node.incErrorCount() > TronVegasNodeInfo.DEFAULT_NODE_MAX_ERROR_COUNT){
                 TronVegasGrpcClientPool.getInstance().remove(node);
