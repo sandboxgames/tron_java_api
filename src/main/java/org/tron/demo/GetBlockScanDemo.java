@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
 import org.tron.walletserver.TronVegasApi;
+import org.tron.walletserver.TronVegasUtils;
 import org.web3j.utils.Numeric;
 
 import java.util.List;
@@ -33,6 +34,7 @@ public class GetBlockScanDemo {
             Protocol.Block block = TronVegasApi.getBlockSafe(-1);
             if(block != null){
                 logger.info("Block:" + block.getBlockHeader().getRawData().getNumber());
+                logger.info("BlockId:" + TronVegasUtils.getBlockId(block));
             }
 
             List<Protocol.Transaction> transactionsList = block.getTransactionsList();

@@ -5,6 +5,7 @@ import com.google.protobuf.ByteString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.api.GrpcAPI;
+import org.tron.common.utils.ByteArray;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
 import org.tron.walletserver.TronVegasApi;
@@ -32,6 +33,7 @@ public class GetBlock2ScanDemo {
             GrpcAPI.BlockExtention block = TronVegasApi.getBlock2Safe(-1);
             if(block != null){
                 logger.info("Block:" + block.getBlockHeader().getRawData().getNumber());
+                logger.info("BlockId:" + ByteArray.toHexString(block.getBlockid().toByteArray()));
             }
 
             List<GrpcAPI.TransactionExtention> transactionsList = block.getTransactionsList();

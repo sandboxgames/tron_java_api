@@ -102,19 +102,21 @@ public class TronVegasGrpcClientPool {
                 scheduledExecutorService = Executors.newScheduledThreadPool(1);
             }
 
-            try{
-                Optional<GrpcAPI.NodeList> opNodeList = TronVegasApi.listNodesByDefault();
-                GrpcAPI.NodeList nodeList = opNodeList.get();
-                if (nodeList.getNodesCount() > 0) {
-                    for (int index = 0; index < nodeList.getNodesCount(); index++) {
-                        GrpcAPI.Node node = nodeList.getNodes(index);
-                        TronVegasNodeHost nodeHost = new TronVegasNodeHost();
-                        nodeHost.init(node.getAddress().getHost().toStringUtf8(), DEFAULT_GRPC_PORT);
-                        addNodeHost(nodeHost);
+            if(!TronVegasApi.isForceUseLocalIPS){
+                try{
+                    Optional<GrpcAPI.NodeList> opNodeList = TronVegasApi.listNodesByDefault();
+                    GrpcAPI.NodeList nodeList = opNodeList.get();
+                    if (nodeList.getNodesCount() > 0) {
+                        for (int index = 0; index < nodeList.getNodesCount(); index++) {
+                            GrpcAPI.Node node = nodeList.getNodes(index);
+                            TronVegasNodeHost nodeHost = new TronVegasNodeHost();
+                            nodeHost.init(node.getAddress().getHost().toStringUtf8(), DEFAULT_GRPC_PORT);
+                            addNodeHost(nodeHost);
+                        }
                     }
+                }catch (Exception ex){
+                    logger.error("TronVegasApi.listNodes ERROR", ex);
                 }
-            }catch (Exception ex){
-                logger.error("TronVegasApi.listNodes ERROR", ex);
             }
 
             if(nodeHostCacheSet.size() <= 0){
