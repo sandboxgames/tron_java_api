@@ -21,4 +21,13 @@ public class TronVegasUtils {
         return ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
     }
 
+    public static String getBlockId(Protocol.Block block){
+        if(block == null){
+            return "";
+        }
+        BlockId blockId = new BlockId(Sha256Hash.of(block.getBlockHeader().getRawData().toByteArray()),
+                block.getBlockHeader().getRawData().getNumber());
+        return ByteArray.toHexString(blockId.getBytes());
+    }
+
 }
