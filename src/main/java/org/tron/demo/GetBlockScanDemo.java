@@ -30,7 +30,7 @@ public class GetBlockScanDemo {
 
         while (!isFinished){
 
-            Protocol.Block block = TronVegasApi.getBlock(-1);
+            Protocol.Block block = TronVegasApi.getBlockSafe(-1);
             if(block != null){
                 logger.info("Block:" + block.getBlockHeader().getRawData().getNumber());
             }

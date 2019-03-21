@@ -79,6 +79,10 @@ public class TronVegasGrpcClientPool {
 
     public void queryFastestNodes(QueryNodeCallback queryNodeCallback, boolean forceQuery) {
 
+        if(TronVegasApi.isForceUseTrongrid){
+            return;
+        }
+
         if(!forceQuery && System.currentTimeMillis() - lastQueryTime < FREQUENCY_QUERY_LIMIT_TIME){
             logger.info("Query fastest node in limit time");
             return;

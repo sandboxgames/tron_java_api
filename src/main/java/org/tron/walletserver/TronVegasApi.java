@@ -84,6 +84,7 @@ public class TronVegasApi {
 
     public static boolean isSupportConstant = false;
     public static boolean isDebug = false;
+    public static boolean isForceUseTrongrid = false;
 
     public static void initWithPrivateKey(String privateKey) {
         ecKey = ECKey.fromPrivate(ByteArray.fromHexString(privateKey));
@@ -121,6 +122,10 @@ public class TronVegasApi {
         List<String> seedNodeList = null;
         if(config.hasPath("seed.node.ip.list")){
             seedNodeList = config.getStringList("seed.node.ip.list");
+        }
+
+        if (config.hasPath("FORCE_USE_TRONGRID")){
+            isForceUseTrongrid = config.getInt("FORCE_USE_TRONGRID") > 0;
         }
         TronVegasGrpcClientPool.getInstance().init(fullNode, solidityNode, maxNodeLimit, seedNodeList);
     }
@@ -231,6 +236,34 @@ public class TronVegasApi {
     public static AddressPrKeyPairMessage generateAddress() {
         EmptyMessage.Builder builder = EmptyMessage.newBuilder();
         return TronVegasGrpcClientPool.getInstance().borrow().generateAddress(builder.build());
+    }
+
+    public static Block getBlockSafe(long blockNum){
+        Block block = null;
+
+        TronVegasNodeInfo node = TronVegasGrpcClientPool.getInstance().get(UUID.randomUUID().toString());
+        GrpcClient client = null;
+
+        if(node != null && node.getClient() != null){
+            client = node.getClient();
+        }else {
+            client = TronVegasGrpcClientPool.getInstance().borrow();
+        }
+
+        try{
+            block = client.getBlock(blockNum);
+            if(isDebug){
+                if(node != null && node.getClient() != null){
+                    logger.debug("From " + node.getHost());
+                }
+            }
+        }catch (Exception ex){
+            logger.error("getBlock ERROR", ex);
+            if(node != null && node.incErrorCount() > TronVegasNodeInfo.DEFAULT_NODE_MAX_ERROR_COUNT){
+                TronVegasGrpcClientPool.getInstance().remove(node);
+            }
+        }
+        return block;
     }
 
     public static BlockExtention getBlock2Safe(long blockNum){
