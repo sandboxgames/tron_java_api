@@ -5,12 +5,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.spongycastle.util.encoders.EncoderException;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
 import org.tron.core.exception.EncodingException;
 import org.tron.walletserver.WalletApi;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class AbiUtil {
 
@@ -54,7 +54,7 @@ public class AbiUtil {
       case "bytes":
         return new CoderDynamicBytes();
       case "trcToken":
-        return new CoderNumber();
+        return new CoderToken();
     }
 
     if (paramTypeBytes.matcher(type).find())
@@ -292,10 +292,21 @@ public class AbiUtil {
 
     for (int idx = 0;idx < codes.size();  idx++) {
       Coder coder = codes.get(idx);
-      String value = values.get(idx).toString();
-
+      Object parameter = values.get(idx);
+      String value;
+      if (parameter instanceof List) {
+        StringBuilder sb = new StringBuilder();
+        for (Object item: (List) parameter) {
+          if (sb.length() != 0) {
+            sb.append(",");
+          }
+          sb.append("\"").append(item).append("\"");
+        }
+        value = "[" + sb.toString() + "]";
+      } else {
+        value = parameter.toString();
+      }
       byte[] encoded = coder.encode(value);
-
       encodedList.add(encoded);
 
       if (coder.dynamic) {
