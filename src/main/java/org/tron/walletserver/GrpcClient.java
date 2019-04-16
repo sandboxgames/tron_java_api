@@ -108,16 +108,16 @@ public class GrpcClient {
   }
 
   public Protocol.NodeInfo getNodeInfo() {
-    return blockingStubFull.getNodeInfo(EmptyMessage.newBuilder().build());
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getNodeInfo(EmptyMessage.newBuilder().build());
   }
 
   public Account queryAccount(byte[] address) {
     ByteString addressBS = ByteString.copyFrom(address);
     Account request = Account.newBuilder().setAddress(addressBS).build();
     if (blockingStubSolidity != null) {
-      return blockingStubSolidity.getAccount(request);
+      return blockingStubSolidity.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getAccount(request);
     } else {
-      return blockingStubFull.getAccount(request);
+      return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getAccount(request);
     }
   }
 
@@ -125,33 +125,33 @@ public class GrpcClient {
     ByteString bsAccountId = ByteString.copyFromUtf8(accountId);
     Account request = Account.newBuilder().setAccountId(bsAccountId).build();
     if (blockingStubSolidity != null) {
-      return blockingStubSolidity.getAccountById(request);
+      return blockingStubSolidity.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getAccountById(request);
     } else {
-      return blockingStubFull.getAccountById(request);
+      return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getAccountById(request);
     }
   }
 
   //Warning: do not invoke this interface provided by others.
   public Transaction signTransaction(TransactionSign transactionSign) {
-    return blockingStubFull.getTransactionSign(transactionSign);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getTransactionSign(transactionSign);
   }
 
   //Warning: do not invoke this interface provided by others.
   public TransactionExtention signTransaction2(TransactionSign transactionSign) {
-    return blockingStubFull.getTransactionSign2(transactionSign);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getTransactionSign2(transactionSign);
   }
 
   //Warning: do not invoke this interface provided by others.
   public TransactionExtention addSign(TransactionSign transactionSign) {
-    return blockingStubFull.addSign(transactionSign);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).addSign(transactionSign);
   }
 
   public TransactionSignWeight getTransactionSignWeight(Transaction transaction) {
-    return blockingStubFull.getTransactionSignWeight(transaction);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getTransactionSignWeight(transaction);
   }
 
   public TransactionApprovedList getTransactionApprovedList(Transaction transaction) {
-    return blockingStubFull.getTransactionApprovedList(transaction);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getTransactionApprovedList(transaction);
   }
 
   //Warning: do not invoke this interface provided by others.
@@ -159,7 +159,7 @@ public class GrpcClient {
     BytesMessage.Builder builder = BytesMessage.newBuilder();
     builder.setValue(ByteString.copyFrom(passPhrase));
 
-    BytesMessage result = blockingStubFull.createAddress(builder.build());
+    BytesMessage result = blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).createAddress(builder.build());
     return result.getValue().toByteArray();
   }
 
@@ -170,7 +170,7 @@ public class GrpcClient {
     builder.setToAddress(ByteString.copyFrom(toAddress));
     builder.setAmount(amount);
 
-    return blockingStubFull.easyTransfer(builder.build());
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).easyTransfer(builder.build());
   }
 
   //Warning: do not invoke this interface provided by others.
@@ -181,7 +181,7 @@ public class GrpcClient {
     builder.setToAddress(ByteString.copyFrom(toAddress));
     builder.setAmount(amount);
 
-    return blockingStubFull.easyTransferByPrivate(builder.build());
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).easyTransferByPrivate(builder.build());
   }
 
   //Warning: do not invoke this interface provided by others.
@@ -193,7 +193,7 @@ public class GrpcClient {
     builder.setAssetId(assetId);
     builder.setAmount(amount);
 
-    return blockingStubFull.easyTransferAsset(builder.build());
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).easyTransferAsset(builder.build());
   }
 
   //Warning: do not invoke this interface provided by others.
@@ -206,122 +206,122 @@ public class GrpcClient {
     builder.setAssetId(assetId);
     builder.setAmount(amount);
 
-    return blockingStubFull.easyTransferAssetByPrivate(builder.build());
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).easyTransferAssetByPrivate(builder.build());
   }
 
   public Transaction createTransaction(Contract.AccountUpdateContract contract) {
-    return blockingStubFull.updateAccount(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).updateAccount(contract);
   }
 
   public TransactionExtention createTransaction2(Contract.AccountUpdateContract contract) {
-    return blockingStubFull.updateAccount2(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).updateAccount2(contract);
   }
 
   public Transaction createTransaction(Contract.SetAccountIdContract contract) {
-    return blockingStubFull.setAccountId(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).setAccountId(contract);
   }
 
   public Transaction createTransaction(Contract.UpdateAssetContract contract) {
-    return blockingStubFull.updateAsset(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).updateAsset(contract);
   }
 
   public TransactionExtention createTransaction2(Contract.UpdateAssetContract contract) {
-    return blockingStubFull.updateAsset2(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).updateAsset2(contract);
   }
 
   public Transaction createTransaction(Contract.TransferContract contract) {
-    return blockingStubFull.createTransaction(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).createTransaction(contract);
   }
 
   public TransactionExtention createTransaction2(Contract.TransferContract contract) {
-    return blockingStubFull.createTransaction2(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).createTransaction2(contract);
   }
 
   public Transaction createTransaction(Contract.FreezeBalanceContract contract) {
-    return blockingStubFull.freezeBalance(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).freezeBalance(contract);
   }
 
   public TransactionExtention createTransaction(Contract.BuyStorageContract contract) {
-    return blockingStubFull.buyStorage(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).buyStorage(contract);
   }
 
   public TransactionExtention createTransaction(Contract.BuyStorageBytesContract contract) {
-    return blockingStubFull.buyStorageBytes(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).buyStorageBytes(contract);
   }
 
   public TransactionExtention createTransaction(Contract.SellStorageContract contract) {
-    return blockingStubFull.sellStorage(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).sellStorage(contract);
   }
 
   public TransactionExtention createTransaction2(Contract.FreezeBalanceContract contract) {
-    return blockingStubFull.freezeBalance2(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).freezeBalance2(contract);
   }
 
   public Transaction createTransaction(Contract.WithdrawBalanceContract contract) {
-    return blockingStubFull.withdrawBalance(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).withdrawBalance(contract);
   }
 
   public TransactionExtention createTransaction2(Contract.WithdrawBalanceContract contract) {
-    return blockingStubFull.withdrawBalance2(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).withdrawBalance2(contract);
   }
 
   public Transaction createTransaction(Contract.UnfreezeBalanceContract contract) {
-    return blockingStubFull.unfreezeBalance(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).unfreezeBalance(contract);
   }
 
   public TransactionExtention createTransaction2(Contract.UnfreezeBalanceContract contract) {
-    return blockingStubFull.unfreezeBalance2(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).unfreezeBalance2(contract);
   }
 
   public Transaction createTransaction(Contract.UnfreezeAssetContract contract) {
-    return blockingStubFull.unfreezeAsset(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).unfreezeAsset(contract);
   }
 
   public TransactionExtention createTransaction2(Contract.UnfreezeAssetContract contract) {
-    return blockingStubFull.unfreezeAsset2(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).unfreezeAsset2(contract);
   }
 
   public Transaction createTransferAssetTransaction(Contract.TransferAssetContract contract) {
-    return blockingStubFull.transferAsset(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).transferAsset(contract);
   }
 
   public TransactionExtention createTransferAssetTransaction2(
       Contract.TransferAssetContract contract) {
-    return blockingStubFull.transferAsset2(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).transferAsset2(contract);
   }
 
   public Transaction createParticipateAssetIssueTransaction(
       Contract.ParticipateAssetIssueContract contract) {
-    return blockingStubFull.participateAssetIssue(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).participateAssetIssue(contract);
   }
 
   public TransactionExtention createParticipateAssetIssueTransaction2(
       Contract.ParticipateAssetIssueContract contract) {
-    return blockingStubFull.participateAssetIssue2(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).participateAssetIssue2(contract);
   }
 
   public Transaction createAssetIssue(Contract.AssetIssueContract contract) {
-    return blockingStubFull.createAssetIssue(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).createAssetIssue(contract);
   }
 
   public TransactionExtention createAssetIssue2(Contract.AssetIssueContract contract) {
-    return blockingStubFull.createAssetIssue2(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).createAssetIssue2(contract);
   }
 
   public Transaction voteWitnessAccount(Contract.VoteWitnessContract contract) {
-    return blockingStubFull.voteWitnessAccount(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).voteWitnessAccount(contract);
   }
 
   public TransactionExtention voteWitnessAccount2(Contract.VoteWitnessContract contract) {
-    return blockingStubFull.voteWitnessAccount2(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).voteWitnessAccount2(contract);
   }
 
   public TransactionExtention proposalCreate(Contract.ProposalCreateContract contract) {
-    return blockingStubFull.proposalCreate(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).proposalCreate(contract);
   }
 
   public Optional<ProposalList> listProposals() {
-    ProposalList proposalList = blockingStubFull.listProposals(EmptyMessage.newBuilder().build());
+    ProposalList proposalList = blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).listProposals(EmptyMessage.newBuilder().build());
     return Optional.ofNullable(proposalList);
   }
 
@@ -329,7 +329,7 @@ public class GrpcClient {
     BytesMessage request = BytesMessage.newBuilder().setValue(ByteString.copyFrom(
         ByteArray.fromLong(Long.parseLong(id))))
         .build();
-    Proposal proposal = blockingStubFull.getProposalById(request);
+    Proposal proposal = blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getProposalById(request);
     return Optional.ofNullable(proposal);
   }
 
@@ -345,7 +345,7 @@ public class GrpcClient {
         .setFromAddress(fromAddressBS)
         .setToAddress(toAddressBS)
         .build();
-    DelegatedResourceList delegatedResource = blockingStubFull
+    DelegatedResourceList delegatedResource = blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS)
         .getDelegatedResource(request);
     return Optional.ofNullable(delegatedResource);
   }
@@ -357,7 +357,7 @@ public class GrpcClient {
 
     BytesMessage bytesMessage = BytesMessage.newBuilder().setValue(addressBS).build();
 
-    DelegatedResourceAccountIndex accountIndex = blockingStubFull
+    DelegatedResourceAccountIndex accountIndex = blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS)
         .getDelegatedResourceAccountIndex(bytesMessage);
     return Optional.ofNullable(accountIndex);
   }
@@ -366,9 +366,9 @@ public class GrpcClient {
   public Optional<ExchangeList> listExchanges() {
     ExchangeList exchangeList;
     if (blockingStubSolidity != null) {
-      exchangeList = blockingStubSolidity.listExchanges(EmptyMessage.newBuilder().build());
+      exchangeList = blockingStubSolidity.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).listExchanges(EmptyMessage.newBuilder().build());
     } else {
-      exchangeList = blockingStubFull.listExchanges(EmptyMessage.newBuilder().build());
+      exchangeList = blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).listExchanges(EmptyMessage.newBuilder().build());
     }
 
     return Optional.ofNullable(exchangeList);
@@ -381,83 +381,83 @@ public class GrpcClient {
 
     Exchange exchange;
     if (blockingStubSolidity != null) {
-      exchange = blockingStubSolidity.getExchangeById(request);
+      exchange = blockingStubSolidity.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getExchangeById(request);
     } else {
-      exchange = blockingStubFull.getExchangeById(request);
+      exchange = blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getExchangeById(request);
     }
 
     return Optional.ofNullable(exchange);
   }
 
   public Optional<ChainParameters> getChainParameters() {
-    ChainParameters chainParameters = blockingStubFull
+    ChainParameters chainParameters = blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS)
         .getChainParameters(EmptyMessage.newBuilder().build());
     return Optional.ofNullable(chainParameters);
   }
 
   public TransactionExtention proposalApprove(Contract.ProposalApproveContract contract) {
-    return blockingStubFull.proposalApprove(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).proposalApprove(contract);
   }
 
   public TransactionExtention proposalDelete(Contract.ProposalDeleteContract contract) {
-    return blockingStubFull.proposalDelete(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).proposalDelete(contract);
   }
 
   public TransactionExtention exchangeCreate(Contract.ExchangeCreateContract contract) {
-    return blockingStubFull.exchangeCreate(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).exchangeCreate(contract);
   }
 
   public TransactionExtention exchangeInject(Contract.ExchangeInjectContract contract) {
-    return blockingStubFull.exchangeInject(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).exchangeInject(contract);
   }
 
   public TransactionExtention exchangeWithdraw(Contract.ExchangeWithdrawContract contract) {
-    return blockingStubFull.exchangeWithdraw(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).exchangeWithdraw(contract);
   }
 
   public TransactionExtention exchangeTransaction(Contract.ExchangeTransactionContract contract) {
-    return blockingStubFull.exchangeTransaction(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).exchangeTransaction(contract);
   }
 
   public Transaction createAccount(Contract.AccountCreateContract contract) {
-    return blockingStubFull.createAccount(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).createAccount(contract);
   }
 
   public TransactionExtention createAccount2(Contract.AccountCreateContract contract) {
-    return blockingStubFull.createAccount2(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).createAccount2(contract);
   }
 
   public AddressPrKeyPairMessage generateAddress(EmptyMessage emptyMessage) {
     if (blockingStubSolidity != null) {
-      return blockingStubSolidity.generateAddress(emptyMessage);
+      return blockingStubSolidity.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).generateAddress(emptyMessage);
     } else {
-      return blockingStubFull.generateAddress(emptyMessage);
+      return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).generateAddress(emptyMessage);
     }
   }
 
   public Transaction createWitness(Contract.WitnessCreateContract contract) {
-    return blockingStubFull.createWitness(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).createWitness(contract);
   }
 
   public TransactionExtention createWitness2(Contract.WitnessCreateContract contract) {
-    return blockingStubFull.createWitness2(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).createWitness2(contract);
   }
 
   public Transaction updateWitness(Contract.WitnessUpdateContract contract) {
-    return blockingStubFull.updateWitness(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).updateWitness(contract);
   }
 
   public TransactionExtention updateWitness2(Contract.WitnessUpdateContract contract) {
-    return blockingStubFull.updateWitness2(contract);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).updateWitness2(contract);
   }
 
   public boolean broadcastTransaction(Transaction signaturedTransaction) {
     int i = 10;
-    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(signaturedTransaction);
+    GrpcAPI.Return response = blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).broadcastTransaction(signaturedTransaction);
     while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
         && i > 0) {
       i--;
-      response = blockingStubFull.broadcastTransaction(signaturedTransaction);
+      response = blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).broadcastTransaction(signaturedTransaction);
       logger.info("repeat times = " + (11 - i));
       try {
         Thread.sleep(1000);
@@ -475,17 +475,17 @@ public class GrpcClient {
   public Block getBlock(long blockNum) {
     if (blockNum < 0) {
       if (blockingStubSolidity != null) {
-        return blockingStubSolidity.getNowBlock(EmptyMessage.newBuilder().build());
+        return blockingStubSolidity.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getNowBlock(EmptyMessage.newBuilder().build());
       } else {
-        return blockingStubFull.getNowBlock(EmptyMessage.newBuilder().build());
+        return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getNowBlock(EmptyMessage.newBuilder().build());
       }
     }
     NumberMessage.Builder builder = NumberMessage.newBuilder();
     builder.setNum(blockNum);
     if (blockingStubSolidity != null) {
-      return blockingStubSolidity.getBlockByNum(builder.build());
+      return blockingStubSolidity.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getBlockByNum(builder.build());
     } else {
-      return blockingStubFull.getBlockByNum(builder.build());
+      return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getBlockByNum(builder.build());
     }
   }
 
@@ -493,26 +493,26 @@ public class GrpcClient {
     NumberMessage.Builder builder = NumberMessage.newBuilder();
     builder.setNum(blockNum);
     if (blockingStubSolidity != null) {
-      return blockingStubSolidity.getTransactionCountByBlockNum(builder.build()).getNum();
+      return blockingStubSolidity.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getTransactionCountByBlockNum(builder.build()).getNum();
     } else {
-      return blockingStubFull.getTransactionCountByBlockNum(builder.build()).getNum();
+      return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getTransactionCountByBlockNum(builder.build()).getNum();
     }
   }
 
   public BlockExtention getBlock2(long blockNum) {
     if (blockNum < 0) {
       if (blockingStubSolidity != null) {
-        return blockingStubSolidity.getNowBlock2(EmptyMessage.newBuilder().build());
+        return blockingStubSolidity.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getNowBlock2(EmptyMessage.newBuilder().build());
       } else {
-        return blockingStubFull.getNowBlock2(EmptyMessage.newBuilder().build());
+        return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getNowBlock2(EmptyMessage.newBuilder().build());
       }
     }
     NumberMessage.Builder builder = NumberMessage.newBuilder();
     builder.setNum(blockNum);
     if (blockingStubSolidity != null) {
-      return blockingStubSolidity.getBlockByNum2(builder.build());
+      return blockingStubSolidity.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getBlockByNum2(builder.build());
     } else {
-      return blockingStubFull.getBlockByNum2(builder.build());
+      return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getBlockByNum2(builder.build());
     }
   }
 
@@ -525,22 +525,22 @@ public class GrpcClient {
 
   public Optional<WitnessList> listWitnesses() {
     if (blockingStubSolidity != null) {
-      WitnessList witnessList = blockingStubSolidity
+      WitnessList witnessList = blockingStubSolidity.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS)
           .listWitnesses(EmptyMessage.newBuilder().build());
       return Optional.ofNullable(witnessList);
     } else {
-      WitnessList witnessList = blockingStubFull.listWitnesses(EmptyMessage.newBuilder().build());
+      WitnessList witnessList = blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).listWitnesses(EmptyMessage.newBuilder().build());
       return Optional.ofNullable(witnessList);
     }
   }
 
   public Optional<AssetIssueList> getAssetIssueList() {
     if (blockingStubSolidity != null) {
-      AssetIssueList assetIssueList = blockingStubSolidity
+      AssetIssueList assetIssueList = blockingStubSolidity.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS)
           .getAssetIssueList(EmptyMessage.newBuilder().build());
       return Optional.ofNullable(assetIssueList);
     } else {
-      AssetIssueList assetIssueList = blockingStubFull
+      AssetIssueList assetIssueList = blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS)
           .getAssetIssueList(EmptyMessage.newBuilder().build());
       return Optional.ofNullable(assetIssueList);
     }
@@ -551,11 +551,11 @@ public class GrpcClient {
     pageMessageBuilder.setOffset(offset);
     pageMessageBuilder.setLimit(limit);
     if (blockingStubSolidity != null) {
-      AssetIssueList assetIssueList = blockingStubSolidity.
-          getPaginatedAssetIssueList(pageMessageBuilder.build());
+      AssetIssueList assetIssueList = blockingStubSolidity.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS)
+          .getPaginatedAssetIssueList(pageMessageBuilder.build());
       return Optional.ofNullable(assetIssueList);
     } else {
-      AssetIssueList assetIssueList = blockingStubFull
+      AssetIssueList assetIssueList = blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS)
           .getPaginatedAssetIssueList(pageMessageBuilder.build());
       return Optional.ofNullable(assetIssueList);
     }
@@ -565,7 +565,7 @@ public class GrpcClient {
     PaginatedMessage.Builder pageMessageBuilder = PaginatedMessage.newBuilder();
     pageMessageBuilder.setOffset(offset);
     pageMessageBuilder.setLimit(limit);
-    ProposalList proposalList = blockingStubFull
+    ProposalList proposalList = blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS)
         .getPaginatedProposalList(pageMessageBuilder.build());
     return Optional.ofNullable(proposalList);
 
@@ -575,43 +575,43 @@ public class GrpcClient {
     PaginatedMessage.Builder pageMessageBuilder = PaginatedMessage.newBuilder();
     pageMessageBuilder.setOffset(offset);
     pageMessageBuilder.setLimit(limit);
-    ExchangeList exchangeList = blockingStubFull
+    ExchangeList exchangeList = blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS)
         .getPaginatedExchangeList(pageMessageBuilder.build());
     return Optional.ofNullable(exchangeList);
 
   }
 
   public Optional<NodeList> listNodes() {
-    NodeList nodeList = blockingStubFull.listNodes(EmptyMessage.newBuilder().build());
+    NodeList nodeList = blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).listNodes(EmptyMessage.newBuilder().build());
     return Optional.ofNullable(nodeList);
   }
 
   public Optional<AssetIssueList> getAssetIssueByAccount(byte[] address) {
     ByteString addressBS = ByteString.copyFrom(address);
     Account request = Account.newBuilder().setAddress(addressBS).build();
-    AssetIssueList assetIssueList = blockingStubFull.getAssetIssueByAccount(request);
+    AssetIssueList assetIssueList = blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getAssetIssueByAccount(request);
     return Optional.ofNullable(assetIssueList);
   }
 
   public AccountNetMessage getAccountNet(byte[] address) {
     ByteString addressBS = ByteString.copyFrom(address);
     Account request = Account.newBuilder().setAddress(addressBS).build();
-    return blockingStubFull.getAccountNet(request);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getAccountNet(request);
   }
 
   public AccountResourceMessage getAccountResource(byte[] address) {
     ByteString addressBS = ByteString.copyFrom(address);
     Account request = Account.newBuilder().setAddress(addressBS).build();
-    return blockingStubFull.getAccountResource(request);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getAccountResource(request);
   }
 
   public Contract.AssetIssueContract getAssetIssueByName(String assetName) {
     ByteString assetNameBs = ByteString.copyFrom(assetName.getBytes());
     BytesMessage request = BytesMessage.newBuilder().setValue(assetNameBs).build();
     if (blockingStubSolidity != null) {
-      return blockingStubSolidity.getAssetIssueByName(request);
+      return blockingStubSolidity.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getAssetIssueByName(request);
     } else {
-      return blockingStubFull.getAssetIssueByName(request);
+      return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getAssetIssueByName(request);
     }
   }
 
@@ -619,10 +619,10 @@ public class GrpcClient {
     ByteString assetNameBs = ByteString.copyFrom(assetName.getBytes());
     BytesMessage request = BytesMessage.newBuilder().setValue(assetNameBs).build();
     if (blockingStubSolidity != null) {
-      AssetIssueList assetIssueList = blockingStubSolidity.getAssetIssueListByName(request);
+      AssetIssueList assetIssueList = blockingStubSolidity.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getAssetIssueListByName(request);
       return Optional.ofNullable(assetIssueList);
     } else {
-      AssetIssueList assetIssueList = blockingStubFull.getAssetIssueListByName(request);
+      AssetIssueList assetIssueList = blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getAssetIssueListByName(request);
       return Optional.ofNullable(assetIssueList);
     }
   }
@@ -631,18 +631,18 @@ public class GrpcClient {
     ByteString assetIdBs = ByteString.copyFrom(assetId.getBytes());
     BytesMessage request = BytesMessage.newBuilder().setValue(assetIdBs).build();
     if (blockingStubSolidity != null) {
-      return blockingStubSolidity.getAssetIssueById(request);
+      return blockingStubSolidity.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getAssetIssueById(request);
     } else {
-      return blockingStubFull.getAssetIssueById(request);
+      return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getAssetIssueById(request);
     }
   }
 
   public NumberMessage getTotalTransaction() {
-    return blockingStubFull.totalTransaction(EmptyMessage.newBuilder().build());
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).totalTransaction(EmptyMessage.newBuilder().build());
   }
 
   public NumberMessage getNextMaintenanceTime() {
-    return blockingStubFull.getNextMaintenanceTime(EmptyMessage.newBuilder().build());
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getNextMaintenanceTime(EmptyMessage.newBuilder().build());
   }
 
 //  public Optional<AssetIssueList> getAssetIssueListByTimestamp(long time) {
@@ -681,7 +681,7 @@ public class GrpcClient {
     accountPaginated.setAccount(account);
     accountPaginated.setOffset(offset);
     accountPaginated.setLimit(limit);
-    TransactionList transactionList = blockingStubExtension
+    TransactionList transactionList = blockingStubExtension.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS)
         .getTransactionsFromThis(accountPaginated.build());
     return Optional.ofNullable(transactionList);
   }
@@ -694,7 +694,7 @@ public class GrpcClient {
     accountPaginated.setAccount(account);
     accountPaginated.setOffset(offset);
     accountPaginated.setLimit(limit);
-    TransactionListExtention transactionList = blockingStubExtension
+    TransactionListExtention transactionList = blockingStubExtension.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS)
         .getTransactionsFromThis2(accountPaginated.build());
     return Optional.ofNullable(transactionList);
   }
@@ -712,7 +712,7 @@ public class GrpcClient {
     accountPaginated.setAccount(account);
     accountPaginated.setOffset(offset);
     accountPaginated.setLimit(limit);
-    TransactionList transactionList = blockingStubExtension
+    TransactionList transactionList = blockingStubExtension.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS)
         .getTransactionsToThis(accountPaginated.build());
     return Optional.ofNullable(transactionList);
   }
@@ -725,7 +725,7 @@ public class GrpcClient {
     accountPaginated.setAccount(account);
     accountPaginated.setOffset(offset);
     accountPaginated.setLimit(limit);
-    TransactionListExtention transactionList = blockingStubExtension
+    TransactionListExtention transactionList = blockingStubExtension.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS)
         .getTransactionsToThis2(accountPaginated.build());
     return Optional.ofNullable(transactionList);
   }
@@ -738,7 +738,7 @@ public class GrpcClient {
   public Optional<Transaction> getTransactionById(String txID) {
     ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txID));
     BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
-    Transaction transaction = blockingStubFull.getTransactionById(request);
+    Transaction transaction = blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getTransactionById(request);
     return Optional.ofNullable(transaction);
   }
 
@@ -747,9 +747,9 @@ public class GrpcClient {
     BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
     TransactionInfo transactionInfo;
     if (blockingStubSolidity != null) {
-      transactionInfo = blockingStubSolidity.getTransactionInfoById(request);
+      transactionInfo = blockingStubSolidity.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getTransactionInfoById(request);
     } else {
-      transactionInfo = blockingStubFull.getTransactionInfoById(request);
+      transactionInfo = blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getTransactionInfoById(request);
     }
     return Optional.ofNullable(transactionInfo);
   }
@@ -757,7 +757,7 @@ public class GrpcClient {
   public Optional<Block> getBlockById(String blockID) {
     ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(blockID));
     BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
-    Block block = blockingStubFull.getBlockById(request);
+    Block block = blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getBlockById(request);
     return Optional.ofNullable(block);
   }
 
@@ -765,7 +765,7 @@ public class GrpcClient {
     BlockLimit.Builder builder = BlockLimit.newBuilder();
     builder.setStartNum(start);
     builder.setEndNum(end);
-    BlockList blockList = blockingStubFull.getBlockByLimitNext(builder.build());
+    BlockList blockList = blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getBlockByLimitNext(builder.build());
     return Optional.ofNullable(blockList);
   }
 
@@ -773,29 +773,29 @@ public class GrpcClient {
     BlockLimit.Builder builder = BlockLimit.newBuilder();
     builder.setStartNum(start);
     builder.setEndNum(end);
-    BlockListExtention blockList = blockingStubFull.getBlockByLimitNext2(builder.build());
+    BlockListExtention blockList = blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getBlockByLimitNext2(builder.build());
     return Optional.ofNullable(blockList);
   }
 
   public Optional<BlockList> getBlockByLatestNum(long num) {
     NumberMessage numberMessage = NumberMessage.newBuilder().setNum(num).build();
-    BlockList blockList = blockingStubFull.getBlockByLatestNum(numberMessage);
+    BlockList blockList = blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getBlockByLatestNum(numberMessage);
     return Optional.ofNullable(blockList);
   }
 
   public Optional<BlockListExtention> getBlockByLatestNum2(long num) {
     NumberMessage numberMessage = NumberMessage.newBuilder().setNum(num).build();
-    BlockListExtention blockList = blockingStubFull.getBlockByLatestNum2(numberMessage);
+    BlockListExtention blockList = blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getBlockByLatestNum2(numberMessage);
     return Optional.ofNullable(blockList);
   }
 
   public TransactionExtention updateSetting(Contract.UpdateSettingContract request) {
-    return blockingStubFull.updateSetting(request);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).updateSetting(request);
   }
 
   public TransactionExtention updateEnergyLimit(
       Contract.UpdateEnergyLimitContract request) {
-    return blockingStubFull.updateEnergyLimit(request);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).updateEnergyLimit(request);
   }
 
   public TransactionExtention deployContract(Contract.CreateSmartContract request) {
@@ -803,18 +803,18 @@ public class GrpcClient {
   }
 
   public TransactionExtention triggerContract(Contract.TriggerSmartContract request) {
-    return blockingStubFull.triggerContract(request);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).triggerContract(request);
   }
 
   public SmartContract getContract(byte[] address) {
     ByteString byteString = ByteString.copyFrom(address);
     BytesMessage bytesMessage = BytesMessage.newBuilder().setValue(byteString).build();
-    return blockingStubFull.getContract(bytesMessage);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).getContract(bytesMessage);
   }
 
   public TransactionExtention accountPermissionUpdate(
       Contract.AccountPermissionUpdateContract request) {
-    return blockingStubFull.accountPermissionUpdate(request);
+    return blockingStubFull.withDeadlineAfter(TronVegasApi.grpcTimeout, TimeUnit.MILLISECONDS).accountPermissionUpdate(request);
   }
 
 }

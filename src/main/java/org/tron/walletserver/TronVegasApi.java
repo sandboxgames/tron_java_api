@@ -86,6 +86,7 @@ public class TronVegasApi {
     public static boolean isDebug = false;
     public static boolean isForceUseTrongrid = false;
     public static boolean isForceUseLocalIPS = false;
+    public static int grpcTimeout = 60 * 1000;//ms
 
     public static void initWithPrivateKey(String privateKey) {
         ecKey = ECKey.fromPrivate(ByteArray.fromHexString(privateKey));
@@ -131,6 +132,9 @@ public class TronVegasApi {
 
         if (config.hasPath("FORCE_USE_LOCALIPS")){
             isForceUseLocalIPS = config.getInt("FORCE_USE_LOCALIPS") > 0;
+        }
+        if (config.hasPath("GRPC_TIMEOUT")){
+            grpcTimeout = config.getInt("GRPC_TIMEOUT");
         }
         TronVegasGrpcClientPool.getInstance().init(fullNode, solidityNode, maxNodeLimit, seedNodeList);
     }

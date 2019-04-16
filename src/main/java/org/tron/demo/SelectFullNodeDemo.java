@@ -15,6 +15,8 @@ public class SelectFullNodeDemo {
 
     private static boolean isFinished = false;
 
+    private static long blockNum = -1;
+
     public static void main(String[] args) {
 
         TronVegasApi.isDebug = true;
@@ -41,10 +43,11 @@ public class SelectFullNodeDemo {
             }
 
             try {
-                GrpcAPI.BlockExtention block = TronVegasApi.getBlock2Safe(-1);
+                GrpcAPI.BlockExtention block = TronVegasApi.getBlock2Safe(blockNum);
                 if(block != null){
                     if(block.hasBlockHeader()){
                         logger.info("Block:" + block.getBlockHeader().getRawData().getNumber());
+                        blockNum = block.getBlockHeader().getRawData().getNumber();
                     }else{
                         logger.info("Block: NULL");
                     }
@@ -56,7 +59,8 @@ public class SelectFullNodeDemo {
             }
 
             try {
-                Thread.sleep(1000);
+                Thread.sleep(3000);
+                blockNum++;
             }catch (InterruptedException e){
 
             }
